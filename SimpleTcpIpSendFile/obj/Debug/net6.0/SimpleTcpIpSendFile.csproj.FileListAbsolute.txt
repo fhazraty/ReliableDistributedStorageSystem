@@ -1,0 +1,14 @@
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\bin\Debug\net6.0\SimpleTcpIpSendFile.exe
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\bin\Debug\net6.0\SimpleTcpIpSendFile.deps.json
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\bin\Debug\net6.0\SimpleTcpIpSendFile.runtimeconfig.json
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\bin\Debug\net6.0\SimpleTcpIpSendFile.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\bin\Debug\net6.0\ref\SimpleTcpIpSendFile.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\bin\Debug\net6.0\SimpleTcpIpSendFile.pdb
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.AssemblyInfoInputs.cache
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.AssemblyInfo.cs
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.csproj.CoreCompileInputs.cache
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\ref\SimpleTcpIpSendFile.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.pdb
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Simulator\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.genruntimeconfig.cache
