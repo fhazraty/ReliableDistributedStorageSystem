@@ -1,22 +1,42 @@
-﻿using System.Net;
+﻿using MessagePack;
+using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Text.Json;
 
 namespace SimpleTcpIpSendFile
 {
+    [MessagePackObject]
+    public class MessageModel
+    {
+        [Key(0)]
+        public byte[] data;
+        [Key(1)]
+        public byte[] signature;
+    }
     internal class TcpIpHelper
     {
-        public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort)
+
+        public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort,byte[] privateKey, byte[] publicKey)
         {
             try
             {
                 CryptographyHelper cHelper = new CryptographyHelper();
-                TcpClient client = new TcpClient(destinationIpAddress, destinationPort);
-                NetworkStream nwStream = client.GetStream();
 
                 //ReadFile
-                byte[] bytesToSend = File.ReadAllBytes(fileToSend);
+                byte[] dataBytes = File.ReadAllBytes(fileToSend);
 
+                MessageModel msgModel = new MessageModel()
+                {
+                    data = dataBytes,
+                    signature = cHelper.Sign(cHelper.GetHashSha256ToByte(dataBytes, 0, dataBytes.Length),privateKey,publicKey)
+                };
+
+                byte[] bytesToSend = MessagePackSerializer.Serialize(msgModel);
+
+                TcpClient client = new TcpClient(destinationIpAddress, destinationPort);
+                NetworkStream nwStream = client.GetStream();
                 //Sending File ...
                 nwStream.Write(bytesToSend, 0, bytesToSend.Length);
 
@@ -30,7 +50,7 @@ namespace SimpleTcpIpSendFile
                         new SendFileMode()
                         {
                             IsSuccessful = true,
-                            Hash = cHelper.GetHashSha256(bytesToSend, 0, bytesToSend.Length)
+                            Hash = ""
                         };
 
                 }
@@ -52,7 +72,7 @@ namespace SimpleTcpIpSendFile
             }
         }
 
-        public SendFileMode ReceiveFile(string fileToReceive, string listeningIpAddress, int listeningPort)
+        public SendFileMode ReceiveFile(string fileToReceive, string listeningIpAddress, int listeningPort, byte[] publicKey)
         {
             try
             {
@@ -71,10 +91,21 @@ namespace SimpleTcpIpSendFile
                 //Read bytes ... 
                 int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
 
+                MessageModel msgModel = MessagePackSerializer.Deserialize<MessageModel>(buffer);
+
+                try
+                {
+                    File.Delete(fileToReceive);
+                }
+                catch (Exception ex)
+                {
+                }
+
+
                 //Storing data on disk ...
                 using (var fs = new FileStream(fileToReceive, FileMode.CreateNew, FileAccess.Write))
                 {
-                    fs.Write(buffer, 0, bytesRead);
+                    fs.Write(msgModel.data, 0, msgModel.data.Length);
                 }
 
                 //Sending Ack ...
@@ -89,7 +120,7 @@ namespace SimpleTcpIpSendFile
                     new SendFileMode()
                     {
                         IsSuccessful = true,
-                        Hash = cHelper.GetHashSha256(buffer, 0, bytesRead)
+                        Hash = cHelper.Verify(cHelper.GetHashSha256ToByte(msgModel.data, 0, msgModel.data.Length), msgModel.signature,publicKey).ToString()
                     };
             }
             catch (Exception ex)

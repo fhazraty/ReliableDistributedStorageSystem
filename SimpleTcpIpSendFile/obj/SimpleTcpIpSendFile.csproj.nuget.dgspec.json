@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Simulator\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj": {}
+    "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Simulator\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj": {
+    "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Simulator\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj",
+        "projectUniqueName": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj",
         "projectName": "SimpleTcpIpSendFile",
-        "projectPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Simulator\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj",
+        "projectPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\SimpleTcpIpSendFile\\SimpleTcpIpSendFile.csproj",
         "packagesPath": "C:\\Users\\Farhad\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Simulator\\SimpleTcpIpSendFile\\obj\\",
+        "outputPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\SimpleTcpIpSendFile\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
@@ -44,6 +44,12 @@
       "frameworks": {
         "net6.0": {
           "targetAlias": "net6.0",
+          "dependencies": {
+            "MessagePack": {
+              "target": "Package",
+              "version": "[2.3.85, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
