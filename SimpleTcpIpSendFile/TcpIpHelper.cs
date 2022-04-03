@@ -18,47 +18,53 @@ namespace SimpleTcpIpSendFile
     internal class TcpIpHelper
     {
 
-        public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort,byte[] privateKey, byte[] publicKey)
+        public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort,byte[] privateKey, byte[] publicKey,int speedBitPerSecond)
         {
             try
             {
-                CryptographyHelper cHelper = new CryptographyHelper();
-
-                //ReadFile
+                //Read DataFile
                 byte[] dataBytes = File.ReadAllBytes(fileToSend);
 
+                CryptographyHelper cHelper = new CryptographyHelper();
+                //Create a model contains signature and data
                 MessageModel msgModel = new MessageModel()
                 {
                     data = dataBytes,
                     signature = cHelper.Sign(cHelper.GetHashSha256ToByte(dataBytes, 0, dataBytes.Length),privateKey,publicKey)
                 };
-
+                //Serialize in binary format
                 byte[] bytesToSend = MessagePackSerializer.Serialize(msgModel);
 
+                //Prepare TCP/IP Connection
                 TcpClient client = new TcpClient(destinationIpAddress, destinationPort);
                 NetworkStream nwStream = client.GetStream();
-                //Sending File ...
-                nwStream.Write(bytesToSend, 0, bytesToSend.Length);
 
-                //Read Result ...
-                byte[] bytesToRead = new byte[client.ReceiveBufferSize];
-                int bytesRead = nwStream.Read(bytesToRead, 0, client.ReceiveBufferSize);
-                client.Close();
-                if (Encoding.ASCII.GetString(bytesToRead, 0, bytesRead) == "done")
+                int iterationCount = bytesToSend.Length / speedBitPerSecond;
+                if(bytesToSend.Length % speedBitPerSecond != 0)
                 {
-                    return
-                        new SendFileMode()
-                        {
-                            IsSuccessful = true,
-                            Hash = ""
-                        };
-
+                    iterationCount++;
                 }
-                //done is not received!
+
+                for (int i = 0; i < iterationCount; i++)
+                {
+                    if(((i + 1) * speedBitPerSecond) < bytesToSend.Length)
+                    {
+                        nwStream.Write(bytesToSend, (i * speedBitPerSecond), speedBitPerSecond);
+                    }
+                    else
+                    {
+                        nwStream.Write(bytesToSend, (i * speedBitPerSecond), bytesToSend.Length- (i * speedBitPerSecond));
+                    }
+                    Thread.Sleep(1000);
+                }
+
+                nwStream.Close();
+                nwStream.Dispose();
+
                 return
                     new SendFileMode()
                     {
-                        IsSuccessful = false
+                        IsSuccessful = true
                     };
             }
             catch (Exception ex)
@@ -89,9 +95,20 @@ namespace SimpleTcpIpSendFile
                 byte[] buffer = new byte[client.ReceiveBufferSize];
 
                 //Read bytes ... 
-                int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
+                //int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
+                
+                byte[] data = new byte[1024];
 
-                MessageModel msgModel = MessagePackSerializer.Deserialize<MessageModel>(buffer);
+                MemoryStream ms = new MemoryStream();
+                int numBytesRead = nwStream.Read(data, 0, data.Length);
+                while (numBytesRead > 0)
+                {
+                    ms.Write(data, 0, numBytesRead);
+
+                    numBytesRead = nwStream.Read(data, 0, data.Length);
+                }
+
+                MessageModel msgModel = MessagePackSerializer.Deserialize<MessageModel>(ms.ToArray());
 
                 try
                 {
@@ -101,16 +118,11 @@ namespace SimpleTcpIpSendFile
                 {
                 }
 
-
                 //Storing data on disk ...
                 using (var fs = new FileStream(fileToReceive, FileMode.CreateNew, FileAccess.Write))
                 {
                     fs.Write(msgModel.data, 0, msgModel.data.Length);
                 }
-
-                //Sending Ack ...
-                var acc = UTF8Encoding.UTF8.GetBytes("done");
-                nwStream.Write(acc, 0, acc.Length);
 
                 //Closing connection ...
                 client.Close();

@@ -21,12 +21,12 @@ if(command == "0")
     byte[] publicKey;
     byte[] privateKey;
     cHelper.GenerateKey(out privateKey,out publicKey);
-    //Storing data on disk ...
+    //Storing private key on disk ...
     using (var fs = new FileStream(priKey, FileMode.CreateNew, FileAccess.Write))
     {
         fs.Write(privateKey, 0, privateKey.Length);
     }
-    //Storing data on disk ...
+    //Storing public key on disk ...
     using (var fs = new FileStream(pubKey, FileMode.CreateNew, FileAccess.Write))
     {
         fs.Write(publicKey, 0, publicKey.Length);
@@ -37,7 +37,7 @@ else if (command == "1")
     byte[] privateKeyBytes = File.ReadAllBytes(priKey);
     byte[] publicKeyBytes = File.ReadAllBytes(pubKey);
 
-    var sendResult = helper.SendFile(fileToSend,"127.0.0.1",5000,privateKeyBytes,publicKeyBytes);
+    var sendResult = helper.SendFile(fileToSend,"127.0.0.1",5000,privateKeyBytes,publicKeyBytes,10);
     Console.WriteLine("Send result :{0}", sendResult.IsSuccessful);
     Console.WriteLine("Hash :{0}", sendResult.Hash);
 }
