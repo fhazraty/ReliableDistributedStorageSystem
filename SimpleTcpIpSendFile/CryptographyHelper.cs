@@ -68,14 +68,13 @@ namespace SimpleTcpIpSendFile
 
         public byte[] ToBytes(ECPoint point)
         {
-            return MessagePackSerializer.Serialize(
-                new FormattableEcPoint { X = point.X, Y = point.Y });
+            return MessagePackSerializer.Serialize(new FormattableEcPoint { X = point.X, Y = point.Y });
         }
 
         public ECPoint ToEcPoint(byte[] bytes)
         {
-            var pt = MessagePackSerializer
-                .Deserialize<FormattableEcPoint>(bytes);
+            var pt = MessagePackSerializer.Deserialize<FormattableEcPoint>(bytes);
+
             return new ECPoint { X = pt.X, Y = pt.Y };
         }
     }

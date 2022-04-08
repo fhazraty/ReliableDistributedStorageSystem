@@ -6,8 +6,8 @@ Console.WriteLine("Press 1 to send or 2 to receive :");
 
 var command = Console.ReadLine();
 
-string fileToSend = @"C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\TestToSend.txt";
-string fileToReceive = @"C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\TestToReceive.txt";
+string fileToSend = @"C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\humans.s02e02.720p.x265.mkv";
+string fileToReceive = @"C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\humans.s02e02.720p.x265-2.mkv";
 
 
 string pubKey = @"C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\pub.txt";
@@ -37,7 +37,7 @@ else if (command == "1")
     byte[] privateKeyBytes = File.ReadAllBytes(priKey);
     byte[] publicKeyBytes = File.ReadAllBytes(pubKey);
 
-    var sendResult = helper.SendFile(fileToSend,"127.0.0.1",5000,privateKeyBytes,publicKeyBytes,10);
+    var sendResult = helper.SendFile(fileToSend,"127.0.0.1",5000,privateKeyBytes,publicKeyBytes,5010240);
     Console.WriteLine("Send result :{0}", sendResult.IsSuccessful);
     Console.WriteLine("Hash :{0}", sendResult.Hash);
 }

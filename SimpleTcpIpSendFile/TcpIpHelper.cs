@@ -1,9 +1,6 @@
 ﻿using MessagePack;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Text.Json;
 
 namespace SimpleTcpIpSendFile
 {
@@ -18,7 +15,7 @@ namespace SimpleTcpIpSendFile
     internal class TcpIpHelper
     {
 
-        public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort,byte[] privateKey, byte[] publicKey,int speedBitPerSecond)
+        public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort,byte[] privateKey, byte[] publicKey,int speedBytePerSecond)
         {
             try
             {
@@ -39,23 +36,31 @@ namespace SimpleTcpIpSendFile
                 TcpClient client = new TcpClient(destinationIpAddress, destinationPort);
                 NetworkStream nwStream = client.GetStream();
 
-                int iterationCount = bytesToSend.Length / speedBitPerSecond;
-                if(bytesToSend.Length % speedBitPerSecond != 0)
+                int iterationCount = bytesToSend.Length / speedBytePerSecond;
+                if(bytesToSend.Length % speedBytePerSecond != 0)
                 {
                     iterationCount++;
                 }
 
                 for (int i = 0; i < iterationCount; i++)
                 {
-                    if(((i + 1) * speedBitPerSecond) < bytesToSend.Length)
+                    DateTime startSendingBuffer = DateTime.Now;
+
+                    if(((i + 1) * speedBytePerSecond) < bytesToSend.Length)
                     {
-                        nwStream.Write(bytesToSend, (i * speedBitPerSecond), speedBitPerSecond);
+                        nwStream.Write(bytesToSend, (i * speedBytePerSecond), speedBytePerSecond);
                     }
                     else
                     {
-                        nwStream.Write(bytesToSend, (i * speedBitPerSecond), bytesToSend.Length- (i * speedBitPerSecond));
+                        nwStream.Write(bytesToSend, (i * speedBytePerSecond), bytesToSend.Length- (i * speedBytePerSecond));
                     }
-                    Thread.Sleep(1000);
+                    DateTime endSendingBuffer = DateTime.Now;
+
+                    var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
+                    if(timeTookToSend < 1000)
+                    {
+                        Thread.Sleep(1000 - (int)timeTookToSend);
+                    }
                 }
 
                 nwStream.Close();
@@ -95,8 +100,6 @@ namespace SimpleTcpIpSendFile
                 byte[] buffer = new byte[client.ReceiveBufferSize];
 
                 //Read bytes ... 
-                //int bytesRead = nwStream.Read(buffer, 0, client.ReceiveBufferSize);
-                
                 byte[] data = new byte[1024];
 
                 MemoryStream ms = new MemoryStream();
