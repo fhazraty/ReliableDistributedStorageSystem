@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "OyTq5Altnlfky6m6nMF8/9buGRaEs/iBMVlkimVwfKUYLkviQqa4nOxrFVO9Z2mv2JcMoKW2nGQLzMG9D0K2aw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Observer\\Observer.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Farhad\\.nuget\\packages\\messagepack\\2.3.85\\messagepack.2.3.85.nupkg.sha512",
+    "C:\\Users\\Farhad\\.nuget\\packages\\messagepack.annotations\\2.3.85\\messagepack.annotations.2.3.85.nupkg.sha512"
+  ],
+  "logs": []
+}
