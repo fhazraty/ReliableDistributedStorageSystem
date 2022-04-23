@@ -1,47 +1,30 @@
-﻿using Observer;
+﻿using Model;
+using Observer;
 
-var cManager = new ConnectionManager();
-var res1 = cManager.AddNewRecord(new FullNodesRecord()
+//static ip port
+string observerBroadCastIp = "127.0.0.1";
+int observerBroadCastPort = 8000;
+
+string observerAddIp = "127.0.0.1";
+int observerAddPort = 8001;
+
+string observerRemoveIp = "127.0.0.1";
+int observerRemovePort = 8002;
+
+var cManager = new ConnectionManager(new ObserverData()
 {
-    IPAddress = "127.0.0.1",
-    PortSend = 5000,
-    PortReceive = 5001
+    BroadCastIp = observerBroadCastIp,
+    BroadCastPort = observerBroadCastPort,
+    AddIp = observerAddIp,
+    AddPort = observerAddPort,
+    RemovePort = observerRemovePort,
+    RemoveIp = observerRemoveIp,
 });
 
-Console.WriteLine(res1);
+Thread addFullNodeThread = new Thread(new ThreadStart(cManager.ListenToAddIpPort));
+addFullNodeThread.Start();
 
-var res2 = cManager.AddNewRecord(new FullNodesRecord()
-{
-    IPAddress = "127.0.0.2",
-    PortSend = 5000,
-    PortReceive = 5001
-});
-
-Console.WriteLine(res2);
-
-var res3 = cManager.AddNewRecord(new FullNodesRecord()
-{
-    IPAddress = "127.0.0.3",
-    PortSend = 5000,
-    PortReceive = 5001
-});
-
-Console.WriteLine(res3);
-
-var res4 = cManager.AddNewRecord(new FullNodesRecord()
-{
-    IPAddress = "127.0.0.4",
-    PortSend = 5000,
-    PortReceive = 5001
-});
-
-Console.WriteLine(res4);
-
-var res5 = cManager.RemoveRecord("127.0.0.3");
-
-Console.WriteLine(res5);
-
-
-Console.WriteLine(cManager.FullNodesData.fullNodesRecords.Count());
+Thread removeFullNodeThread = new Thread(new ThreadStart(cManager.ListenToRemoveIpPort));
+removeFullNodeThread.Start();
 
 Console.ReadKey();

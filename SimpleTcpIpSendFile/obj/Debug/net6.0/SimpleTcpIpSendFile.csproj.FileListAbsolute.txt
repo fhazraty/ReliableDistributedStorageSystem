@@ -30,3 +30,5 @@ C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Bl
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.csproj.CopyComplete
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\obj\Debug\net6.0\SimpleTcpIpSendFile.genruntimeconfig.cache
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\obj\Debug\net6.0\refint\SimpleTcpIpSendFile.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\Debug\net6.0\Model.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\Debug\net6.0\Model.pdb

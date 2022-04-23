@@ -8,7 +8,8 @@
     ".NETCoreApp,Version=v6.0": {
       "SimpleTcpIpSendFile/1.0.0": {
         "dependencies": {
-          "MessagePack": "2.3.85"
+          "MessagePack": "2.3.85",
+          "Model": "1.0.0"
         },
         "runtime": {
           "SimpleTcpIpSendFile.dll": {}
@@ -32,6 +33,14 @@
             "fileVersion": "2.3.85.30390"
           }
         }
+      },
+      "Model/1.0.0": {
+        "dependencies": {
+          "MessagePack": "2.3.85"
+        },
+        "runtime": {
+          "Model.dll": {}
+        }
       }
     }
   },
@@ -54,6 +63,11 @@
       "sha512": "sha512-2GCYZ9qgNS5Og0tiqfhWRhcfDZI/iRi8t07R0fNic1HthMMRfWxWOKDIBhtMA1RwZM4BuRsmJXUgk3evyisb1w==",
       "path": "messagepack.annotations/2.3.85",
       "hashPath": "messagepack.annotations.2.3.85.nupkg.sha512"
+    },
+    "Model/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

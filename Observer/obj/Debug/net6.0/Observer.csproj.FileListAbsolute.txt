@@ -16,3 +16,5 @@ C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Bl
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\Observer\obj\Debug\net6.0\Observer.pdb
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\Observer\obj\Debug\net6.0\Observer.genruntimeconfig.cache
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\Observer\obj\Debug\net6.0\ref\Observer.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\Observer\bin\Debug\net6.0\Model.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\Observer\bin\Debug\net6.0\Model.pdb

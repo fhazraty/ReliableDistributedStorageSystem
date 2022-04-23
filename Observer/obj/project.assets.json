@@ -22,6 +22,19 @@
         "runtime": {
           "lib/netstandard2.0/MessagePack.Annotations.dll": {}
         }
+      },
+      "Model/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v6.0",
+        "dependencies": {
+          "MessagePack": "2.3.85"
+        },
+        "compile": {
+          "bin/placeholder/Model.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Model.dll": {}
+        }
       }
     }
   },
@@ -59,11 +72,17 @@
         "messagepack.annotations.2.3.85.nupkg.sha512",
         "messagepack.annotations.nuspec"
       ]
+    },
+    "Model/1.0.0": {
+      "type": "project",
+      "path": "../Model/Model.csproj",
+      "msbuildProject": "../Model/Model.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net6.0": [
-      "MessagePack >= 2.3.85"
+      "MessagePack >= 2.3.85",
+      "Model >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -99,7 +118,11 @@
       "frameworks": {
         "net6.0": {
           "targetAlias": "net6.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Model\\Model.csproj": {
+              "projectPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Model\\Model.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -132,7 +155,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.201\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
       }
     }
   }

@@ -1,15 +1,25 @@
 ﻿using MessagePack;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Model;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net.Sockets;
 
 namespace Observer
 {
-    public class ConnectionManager
+    public class ConnectionManager: IDisposable
     {
+        private readonly object fileLock = new object();
+        private TcpListener listenerRemove;
+        private TcpListener listenerAdd;
+        private TcpListener listenerBroadCast;
+        public bool StopThreadRequested { get; set; }
+        public ObserverData ObserverData { get; set; }
+        public ConnectionManager(ObserverData oData)
+        {
+            this.ObserverData = oData;
+            this.StopThreadRequested = false;
+            FullNodesData = new FullNodesData();
+            LoadAllDataFromDisk();
+        }
         public string FileStoragePath
         {
             get
@@ -17,16 +27,7 @@ namespace Observer
                 return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\P2PStorage.txt";
             }
         }
-
         public FullNodesData FullNodesData { get; set; }
-
-        public ConnectionManager()
-        {
-            FullNodesData = new FullNodesData();
-
-            LoadAllDataFromDisk();
-        }
-
         public bool AddNewRecord(FullNodesRecord record)
         {
             int counter = -1;
@@ -34,7 +35,10 @@ namespace Observer
             foreach (var recordSearch in FullNodesData.fullNodesRecords)
             {
                 counter++;
-                if (recordSearch.IPAddress.ToString() == record.IPAddress.ToString())
+                if (recordSearch.SendIP == record.SendIP&&
+                    recordSearch.SendPort == record.SendPort &&
+                    recordSearch.ReceiveIP == record.ReceiveIP &&
+                    recordSearch.ReceivePort == record.ReceivePort)
                 {
                     found = true;
                     break;
@@ -43,7 +47,7 @@ namespace Observer
 
             if (found)
             {
-                RemoveRecord(record.IPAddress);
+                RemoveRecord(record);
             }
 
             FullNodesData.fullNodesRecords.Add(record);
@@ -52,15 +56,17 @@ namespace Observer
             
             return true;
         }
-
-        public bool RemoveRecord(string ip)
+        public bool RemoveRecord(FullNodesRecord record)
         {
             int counter = -1;
             bool found = false;
-            foreach (var record in FullNodesData.fullNodesRecords)
+            foreach (var item in FullNodesData.fullNodesRecords)
             {
                 counter++;
-                if (record.IPAddress.ToString() == ip.ToString())
+                if (item.SendIP == record.SendIP &&
+                    item.SendPort == record.SendPort &&
+                    item.ReceiveIP == record.ReceiveIP &&
+                    item.ReceivePort == record.ReceivePort)
                 {
                     found = true;
                     break;
@@ -75,50 +81,142 @@ namespace Observer
             }
             return found;
         }
-
         public bool PersistAllDataOnDisk()
         {
-            try
+            lock (fileLock)
             {
-                File.Delete(FileStoragePath);
-                
-                byte[] bytesToWrite = MessagePackSerializer.Serialize(FullNodesData);
+                try
+                {
+                    File.Delete(FileStoragePath);
 
-                var fStream = new FileStream(FileStoragePath, FileMode.CreateNew, FileAccess.Write);
+                    byte[] bytesToWrite = MessagePackSerializer.Serialize(FullNodesData);
 
-                BinaryWriter bw = new BinaryWriter(fStream);
+                    var fStream = new FileStream(FileStoragePath, FileMode.CreateNew, FileAccess.Write);
 
-                bw.Write(bytesToWrite);
-                bw.Close();
-                bw.Dispose();
-                fStream.Close();
-                fStream.Dispose();
+                    BinaryWriter bw = new BinaryWriter(fStream);
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
+                    bw.Write(bytesToWrite);
+                    bw.Close();
+                    bw.Dispose();
+                    fStream.Close();
+                    fStream.Dispose();
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
+
             }
         }
-
         public bool LoadAllDataFromDisk()
         {
-            try
+            lock (fileLock)
             {
-                var fStream = new FileStream(FileStoragePath, FileMode.Open, FileAccess.Read);
-                
-                byte[] bytesToRead = File.ReadAllBytes(FileStoragePath);
+                try
+                {
+                    var fStream = new FileStream(FileStoragePath, FileMode.Open, FileAccess.Read);
 
-                FullNodesData = MessagePackSerializer.Deserialize<FullNodesData>(bytesToRead.ToArray());
+                    byte[] bytesToRead = File.ReadAllBytes(FileStoragePath);
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
+                    FullNodesData = MessagePackSerializer.Deserialize<FullNodesData>(bytesToRead.ToArray());
+
+                    fStream.Close();
+                    fStream.Dispose();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    return false;
+                }
             }
         }
+        public void ListenToAddIpPort()
+        {
+            while (!StopThreadRequested)
+            {
+                try
+                {
+                    listenerAdd = new TcpListener(IPAddress.Parse(ObserverData.AddIp), ObserverData.AddPort);
+                    listenerAdd.Start();
 
+                    TcpClient client = listenerAdd.AcceptTcpClient();
+
+                    NetworkStream nwStream = client.GetStream();
+                    byte[] buffer = new byte[client.ReceiveBufferSize];
+
+                    byte[] data = new byte[1024];
+
+                    MemoryStream ms = new MemoryStream();
+                    int numBytesRead = nwStream.Read(data, 0, data.Length);
+                    while (numBytesRead > 0)
+                    {
+                        ms.Write(data, 0, numBytesRead);
+
+                        numBytesRead = nwStream.Read(data, 0, data.Length);
+                    }
+
+                    FullNodesRecord fNodeRecord = MessagePackSerializer.Deserialize<FullNodesRecord>(ms.ToArray());
+
+                    AddNewRecord(fNodeRecord);
+
+                    client.Close();
+                    client.Dispose();
+                    listenerAdd.Stop();
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
+                }
+            }   
+        }
+        public void ListenToRemoveIpPort()
+        {
+            while (!StopThreadRequested)
+            {
+                try
+                {
+                    listenerRemove = new TcpListener(IPAddress.Parse(ObserverData.RemoveIp), ObserverData.RemovePort);
+                    listenerRemove.Start();
+
+                    TcpClient client = listenerRemove.AcceptTcpClient();
+
+                    NetworkStream nwStream = client.GetStream();
+                    byte[] buffer = new byte[client.ReceiveBufferSize];
+
+                    byte[] data = new byte[1024];
+
+                    MemoryStream ms = new MemoryStream();
+                    int numBytesRead = nwStream.Read(data, 0, data.Length);
+                    while (numBytesRead > 0)
+                    {
+                        ms.Write(data, 0, numBytesRead);
+
+                        numBytesRead = nwStream.Read(data, 0, data.Length);
+                    }
+
+                    FullNodesRecord fNodeRecord = MessagePackSerializer.Deserialize<FullNodesRecord>(ms.ToArray());
+
+                    RemoveRecord(fNodeRecord);
+
+                    client.Close();
+                    client.Dispose();
+                    listenerRemove.Stop();
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
+                }
+            }
+        }
+        public void Dispose()
+        {
+            StopThreadRequested = true;
+            this.listenerAdd.Stop();
+            this.listenerRemove.Stop();
+        }
     }
 }

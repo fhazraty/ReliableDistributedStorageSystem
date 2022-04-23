@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using Model;
 using System.Net;
 using System.Net.Sockets;
 
@@ -12,9 +13,9 @@ namespace SimpleTcpIpSendFile
         [Key(1)]
         public byte[] signature;
     }
-    internal class TcpIpHelper
+    public class TcpIpHelper
     {
-
+        public FullNodesData FullNodesData;
         public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort,byte[] privateKey, byte[] publicKey,int speedBytePerSecond)
         {
             try
@@ -82,7 +83,6 @@ namespace SimpleTcpIpSendFile
                 };
             }
         }
-
         public SendFileMode ReceiveFile(string fileToReceive, string listeningIpAddress, int listeningPort, byte[] publicKey)
         {
             try
@@ -147,6 +147,9 @@ namespace SimpleTcpIpSendFile
                     Exception = ex
                 };
             }
+        }
+        public void RefreshFullNodesData()
+        {
         }
     }
 
