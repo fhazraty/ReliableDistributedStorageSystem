@@ -32,3 +32,5 @@ C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Bl
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\obj\Debug\net6.0\refint\SimpleTcpIpSendFile.dll
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\Debug\net6.0\Model.dll
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\Debug\net6.0\Model.pdb
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\Debug\net6.0\Utilities.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\SimpleTcpIpSendFile\bin\Debug\net6.0\Utilities.pdb

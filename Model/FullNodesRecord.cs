@@ -13,5 +13,9 @@ namespace Model
         public int SendPort { get; set; }
         [Key(3)]
         public int ReceivePort { get; set; }
+        [Key(4)]
+        public Guid Id { get; set; }
+        [Key(5)]
+        public byte[] PublicKey { get; set; }
     }
 }

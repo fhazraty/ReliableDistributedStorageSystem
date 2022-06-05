@@ -1,4 +1,5 @@
-﻿using SimpleTcpIpSendFile;
+﻿using Model;
+using Utilities;
 
 Console.WriteLine("Simple TCP IP Send and receive File:");
 Console.WriteLine("Press 0 to Generate keys :");
@@ -38,16 +39,23 @@ else if (command == "1")
     byte[] publicKeyBytes = File.ReadAllBytes(pubKey);
 
     var sendResult = helper.SendFile(fileToSend,"127.0.0.1",5000,privateKeyBytes,publicKeyBytes,5010240);
-    Console.WriteLine("Send result :{0}", sendResult.IsSuccessful);
-    Console.WriteLine("Hash :{0}", sendResult.Hash);
+    Console.WriteLine("Send result :{0}", sendResult.Successful);
+    if (sendResult.Successful)
+    {
+        Console.WriteLine("Hash :{0}", ((SendFileMode)sendResult).ResultContainer);
+    }
 }
 else
 {
     byte[] publicKeyBytes = File.ReadAllBytes(pubKey);
 
     var receiveResult = helper.ReceiveFile(fileToReceive, "127.0.0.1", 5000,publicKeyBytes);
-    Console.WriteLine("Receive result :{0}", receiveResult.IsSuccessful);
-    Console.WriteLine("Hash :{0}", receiveResult.Hash);
+    Console.WriteLine("Receive result :{0}", receiveResult.Successful);
+    if(receiveResult.Successful)
+    {
+        Console.WriteLine("Hash :{0}",((SendFileMode) receiveResult).ResultContainer);
+    }
+    
 }
 
 Console.ReadKey();

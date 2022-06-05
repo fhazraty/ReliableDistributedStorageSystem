@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using Utilities;
 
 namespace FullNode
 {
@@ -26,16 +27,22 @@ namespace FullNode
             this.ObserverData = observerData;
         }
 
-        public bool RegisterOnObserver()
+        public IBaseResult RegisterOnObserver()
         {
             try
             {
+                var cHelper = new CryptographyHelper();
+                byte[] publicKey;
+                byte[] privateKey;
+                cHelper.GenerateKey(out privateKey, out publicKey);
+
                 byte[] bytesToSend = MessagePackSerializer.Serialize(new FullNodesRecord()
                 {
                     SendIP = this.SendIP,
                     ReceiveIP = this.ReceiveIP,
                     ReceivePort = this.ReceivePort,
-                    SendPort = this.SendPort
+                    SendPort = this.SendPort,
+                    PublicKey = publicKey
                 });
 
                 TcpClient client = new TcpClient(ObserverData.AddIp, ObserverData.AddPort);
@@ -46,12 +53,19 @@ namespace FullNode
                 nwStream.Close();
                 nwStream.Dispose();
 
-                return true;
-                
+                return new RegisterSuccessResult()
+                {
+                    ResultContainer = privateKey,
+                    Successful = true
+                };
             }
             catch (Exception ex)
             {
-                return false;
+                return new ErrorResult()
+                {
+                    Successful = false,
+                    ResultContainer = ex
+                };
             }
         }
 

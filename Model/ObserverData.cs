@@ -8,6 +8,19 @@ namespace Model
 {
     public class ObserverData
     {
+        public ObserverData()
+        {
+
+        }
+        public ObserverData(string broadCastIp,int broadCastPort,string addIp,int addPort,string removeIp,int removePort)
+        {
+            this.BroadCastIp = broadCastIp;
+            this.BroadCastPort = broadCastPort;
+            this.AddIp = addIp;
+            this.AddPort = addPort;
+            this.RemoveIp = removeIp;
+            this.RemovePort = removePort;
+        }
         public string BroadCastIp { get; set; }
         public int BroadCastPort { get; set; }
         public string AddIp { get; set; }

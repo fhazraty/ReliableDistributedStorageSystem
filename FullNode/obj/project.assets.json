@@ -35,6 +35,20 @@
         "runtime": {
           "bin/placeholder/Model.dll": {}
         }
+      },
+      "Utilities/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v6.0",
+        "dependencies": {
+          "MessagePack": "2.3.85",
+          "Model": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Utilities.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Utilities.dll": {}
+        }
       }
     }
   },
@@ -77,12 +91,18 @@
       "type": "project",
       "path": "../Model/Model.csproj",
       "msbuildProject": "../Model/Model.csproj"
+    },
+    "Utilities/1.0.0": {
+      "type": "project",
+      "path": "../Utilities/Utilities.csproj",
+      "msbuildProject": "../Utilities/Utilities.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net6.0": [
       "MessagePack >= 2.3.85",
-      "Model >= 1.0.0"
+      "Model >= 1.0.0",
+      "Utilities >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -121,6 +141,9 @@
           "projectReferences": {
             "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Model\\Model.csproj": {
               "projectPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Model\\Model.csproj"
+            },
+            "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Utilities\\Utilities.csproj": {
+              "projectPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Utilities\\Utilities.csproj"
             }
           }
         }
@@ -155,7 +178,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.202\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.300\\RuntimeIdentifierGraph.json"
       }
     }
   }

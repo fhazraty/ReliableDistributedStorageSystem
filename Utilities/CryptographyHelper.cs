@@ -1,9 +1,8 @@
-﻿using MessagePack;
-using System.Security.Cryptography;
-using System.Text;
-
-namespace SimpleTcpIpSendFile
+﻿namespace Utilities
 {
+    using MessagePack; //Install-Package MessagePack -Version 2.3.85
+    using System.Security.Cryptography;
+    using System.Text;
     public class CryptographyHelper
     {
         public readonly ECCurve Curve = ECCurve.NamedCurves.nistP256;

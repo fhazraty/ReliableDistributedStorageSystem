@@ -18,3 +18,5 @@ C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Bl
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\FullNode\bin\Debug\net6.0\Model.dll
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\FullNode\bin\Debug\net6.0\Model.pdb
 C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\FullNode\obj\Debug\net6.0\FullNode.csproj.CopyComplete
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\FullNode\bin\Debug\net6.0\Utilities.dll
+C:\Users\Farhad\Desktop\PHD\Paper\A Reliable Distributed Storage System using Blockchain Networks\Sim\FullNode\bin\Debug\net6.0\Utilities.pdb

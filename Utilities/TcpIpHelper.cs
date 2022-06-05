@@ -3,20 +3,12 @@ using Model;
 using System.Net;
 using System.Net.Sockets;
 
-namespace SimpleTcpIpSendFile
+namespace Utilities
 {
-    [MessagePackObject]
-    public class MessageModel
-    {
-        [Key(0)]
-        public byte[] data;
-        [Key(1)]
-        public byte[] signature;
-    }
     public class TcpIpHelper
     {
         public FullNodesData FullNodesData;
-        public SendFileMode SendFile(string fileToSend,string destinationIpAddress,int destinationPort,byte[] privateKey, byte[] publicKey,int speedBytePerSecond)
+        public IBaseResult SendFile(string fileToSend, string destinationIpAddress, int destinationPort, byte[] privateKey, byte[] publicKey, int speedBytePerSecond)
         {
             try
             {
@@ -28,7 +20,7 @@ namespace SimpleTcpIpSendFile
                 MessageModel msgModel = new MessageModel()
                 {
                     data = dataBytes,
-                    signature = cHelper.Sign(cHelper.GetHashSha256ToByte(dataBytes, 0, dataBytes.Length),privateKey,publicKey)
+                    signature = cHelper.Sign(cHelper.GetHashSha256ToByte(dataBytes, 0, dataBytes.Length), privateKey, publicKey)
                 };
                 //Serialize in binary format
                 byte[] bytesToSend = MessagePackSerializer.Serialize(msgModel);
@@ -38,7 +30,7 @@ namespace SimpleTcpIpSendFile
                 NetworkStream nwStream = client.GetStream();
 
                 int iterationCount = bytesToSend.Length / speedBytePerSecond;
-                if(bytesToSend.Length % speedBytePerSecond != 0)
+                if (bytesToSend.Length % speedBytePerSecond != 0)
                 {
                     iterationCount++;
                 }
@@ -47,18 +39,18 @@ namespace SimpleTcpIpSendFile
                 {
                     DateTime startSendingBuffer = DateTime.Now;
 
-                    if(((i + 1) * speedBytePerSecond) < bytesToSend.Length)
+                    if (((i + 1) * speedBytePerSecond) < bytesToSend.Length)
                     {
                         nwStream.Write(bytesToSend, (i * speedBytePerSecond), speedBytePerSecond);
                     }
                     else
                     {
-                        nwStream.Write(bytesToSend, (i * speedBytePerSecond), bytesToSend.Length- (i * speedBytePerSecond));
+                        nwStream.Write(bytesToSend, (i * speedBytePerSecond), bytesToSend.Length - (i * speedBytePerSecond));
                     }
                     DateTime endSendingBuffer = DateTime.Now;
 
                     var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
-                    if(timeTookToSend < 1000)
+                    if (timeTookToSend < 1000)
                     {
                         Thread.Sleep(1000 - (int)timeTookToSend);
                     }
@@ -67,23 +59,22 @@ namespace SimpleTcpIpSendFile
                 nwStream.Close();
                 nwStream.Dispose();
 
-                return
-                    new SendFileMode()
-                    {
-                        IsSuccessful = true
-                    };
+                return new SendFileMode()
+                {
+                    Successful = true
+                };
             }
             catch (Exception ex)
             {
                 //Exception occured!
-                return new SendFileMode()
+                return new ErrorResult()
                 {
-                    IsSuccessful = false,
-                    Exception = ex
+                    Successful = false,
+                    ResultContainer = ex
                 };
             }
         }
-        public SendFileMode ReceiveFile(string fileToReceive, string listeningIpAddress, int listeningPort, byte[] publicKey)
+        public IBaseResult ReceiveFile(string fileToReceive, string listeningIpAddress, int listeningPort, byte[] publicKey)
         {
             try
             {
@@ -134,29 +125,22 @@ namespace SimpleTcpIpSendFile
                 return
                     new SendFileMode()
                     {
-                        IsSuccessful = true,
-                        Hash = cHelper.Verify(cHelper.GetHashSha256ToByte(msgModel.data, 0, msgModel.data.Length), msgModel.signature,publicKey).ToString()
+                        Successful = true,
+                        ResultContainer = cHelper.Verify(cHelper.GetHashSha256ToByte(msgModel.data, 0, msgModel.data.Length), msgModel.signature, publicKey).ToString()
                     };
             }
             catch (Exception ex)
             {
                 //Exception occured!
-                return new SendFileMode()
+                return new ErrorResult()
                 {
-                    IsSuccessful = false,
-                    Exception = ex
+                    Successful = false,
+                    ResultContainer = ex
                 };
             }
         }
         public void RefreshFullNodesData()
         {
         }
-    }
-
-    public class SendFileMode
-    {
-        public bool IsSuccessful { get; set; }
-        public Exception? Exception { get; set; }
-        public string? Hash { get; set; }
     }
 }
