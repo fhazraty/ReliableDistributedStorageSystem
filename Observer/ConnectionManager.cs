@@ -13,13 +13,8 @@ namespace Observer
         private TcpListener listenerBroadCast;
         public bool StopThreadRequested { get; set; }
         public ObserverData ObserverData { get; set; }
-        public ConnectionManager(ObserverData oData)
-        {
-            this.ObserverData = oData;
-            this.StopThreadRequested = false;
-            FullNodesData = new FullNodesData();
-            LoadAllDataFromDisk();
-        }
+        public FullNodesData FullNodesData { get; set; }
+        public List<List<int>> NetworkBandWidth { get; set; }
         public string FileStoragePath
         {
             get
@@ -27,7 +22,14 @@ namespace Observer
                 return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\P2PStorage.txt";
             }
         }
-        public FullNodesData FullNodesData { get; set; }
+        public ConnectionManager(ObserverData oData, List<List<int>> networkBandWidth)
+        {
+            this.ObserverData = oData;
+            this.NetworkBandWidth = networkBandWidth;
+            this.StopThreadRequested = false;
+            FullNodesData = new FullNodesData();
+            LoadAllDataFromDisk();
+        }
         public bool AddNewRecord(FullNodesRecord record)
         {
             int counter = -1;
@@ -208,6 +210,75 @@ namespace Observer
                 catch (Exception ex)
                 {
 
+                    throw;
+                }
+            }
+        }
+        public void ListenToBroadCastIpPort()
+        {
+            while (!StopThreadRequested)
+            {
+                try
+                {
+                    listenerBroadCast = new TcpListener(IPAddress.Parse(ObserverData.BroadCastIp), ObserverData.BroadCastPort);
+                    listenerBroadCast.Start();
+
+                    TcpClient client = listenerBroadCast.AcceptTcpClient();
+
+                    IPEndPoint? remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+                    if(remoteIpEndPoint == null) { return ; }
+                    
+                    LoadAllDataFromDisk();
+
+                    int counter = 0;
+                    foreach (var fullNodeData in FullNodesData.fullNodesRecords)
+                    {
+                        //Find index of fullnode to adapt networkbandwith based on initialization
+                        if(fullNodeData.SendIP == remoteIpEndPoint.Address.ToString())
+                        {
+                            break;
+                        }
+                        counter++;
+                    }
+                    int sendSpeedFromObserverToFullNode = (NetworkBandWidth[10])[counter];
+
+                    NetworkStream nwStream = client.GetStream();
+
+                    //Serialize in binary format
+                    byte[] bytesToSend = MessagePackSerializer.Serialize(FullNodesData);
+
+                    int iterationCount = bytesToSend.Length / sendSpeedFromObserverToFullNode;
+                    if (bytesToSend.Length % sendSpeedFromObserverToFullNode != 0)
+                    {
+                        iterationCount++;
+                    }
+
+                    for (int i = 0; i < iterationCount; i++)
+                    {
+                        DateTime startSendingBuffer = DateTime.Now;
+
+                        if (((i + 1) * sendSpeedFromObserverToFullNode) < bytesToSend.Length)
+                        {
+                            nwStream.Write(bytesToSend, (i * sendSpeedFromObserverToFullNode), sendSpeedFromObserverToFullNode);
+                        }
+                        else
+                        {
+                            nwStream.Write(bytesToSend, (i * sendSpeedFromObserverToFullNode), bytesToSend.Length - (i * sendSpeedFromObserverToFullNode));
+                        }
+                        DateTime endSendingBuffer = DateTime.Now;
+
+                        var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
+                        if (timeTookToSend < 1000)
+                        {
+                            Thread.Sleep(1000 - (int)timeTookToSend);
+                        }
+                    }
+
+                    nwStream.Close();
+                    nwStream.Dispose();
+                }
+                catch (Exception ex)
+                {
                     throw;
                 }
             }

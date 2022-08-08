@@ -67,25 +67,25 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Farhad\\.nuget\\packages\\": {},
+    "C:\\Users\\farhad\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {},
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Model\\Model.csproj",
+      "projectUniqueName": "C:\\Users\\farhad\\source\\repos\\fhazraty\\ReliableDistributedStorageSystem\\Model\\Model.csproj",
       "projectName": "Model",
-      "projectPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Model\\Model.csproj",
-      "packagesPath": "C:\\Users\\Farhad\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Farhad\\Desktop\\PHD\\Paper\\A Reliable Distributed Storage System using Blockchain Networks\\Sim\\Model\\obj\\",
+      "projectPath": "C:\\Users\\farhad\\source\\repos\\fhazraty\\ReliableDistributedStorageSystem\\Model\\Model.csproj",
+      "packagesPath": "C:\\Users\\farhad\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\farhad\\source\\repos\\fhazraty\\ReliableDistributedStorageSystem\\Model\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "C:\\Users\\Farhad\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\farhad\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -132,7 +132,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.300\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.302\\RuntimeIdentifierGraph.json"
       }
     }
   }

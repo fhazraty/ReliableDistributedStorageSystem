@@ -9,7 +9,7 @@ namespace Model
         {
             fullNodesRecords = new List<FullNodesRecord>();
         }
-        [Key(3)]
+        [Key(0)]
         public List<FullNodesRecord> fullNodesRecords { get; set; }
     }
 }

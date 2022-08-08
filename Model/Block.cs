@@ -8,6 +8,11 @@ namespace Model
     [MessagePackObject]
     public class Block
     {
+        public Block()
+        {
+            Header = new BlockHeader();
+            Content = new BlockContent();
+        }
         /// <summary>
         /// The header of block
         /// </summary>
@@ -30,55 +35,62 @@ namespace Model
         public Guid Id;
 
         /// <summary>
-        /// Blockchain version
-        /// </summary>
-        [Key(1)]
-        public int version;
-
-        /// <summary>
         /// The sequnce of blocks
         /// </summary>
-        [Key(2)]
+        [Key(1)]
         public long SequenceNumber;
 
         /// <summary>
         /// Binary data files
         /// </summary>
-        [Key(3)]
-        public byte[] data;
+        [Key(2)]
+        public byte[] Data;
 
         /// <summary>
         /// File name
         /// </summary>
-        [Key(4)]
-        public string fileName;
+        [Key(3)]
+        public string FileName;
 
         /// <summary>
         /// Is it the start of a new file ?
         /// </summary>
-        [Key(5)]
-        public bool startFile;
+        [Key(4)]
+        public bool StartFile;
 
         /// <summary>
         /// Is it the end of the file ?
         /// </summary>
-        [Key(6)]
-        public bool endFile;
+        [Key(5)]
+        public bool EndFile;
     }
 
     [MessagePackObject]
     public class BlockHeader
     {
         /// <summary>
-        /// Signature of current block
-        /// </summary>
-        [Key(0)]
-        public byte[] signatureCurrentBlock;
-
-        /// <summary>
         /// Signature of previous block
         /// </summary>
+        [Key(0)]
+        public byte[] HashPreviousBlock;
         [Key(1)]
-        public byte[] signaturePreviousBlock;
+        public long BlockMaxSize
+        {
+            get 
+            {
+                return 1024*1024*2; // 2Mb
+            }
+        }
+        /// <summary>
+        /// Blockchain version
+        /// </summary>
+        [Key(2)]
+        public int Version
+        {
+            get
+            {
+                return 1;
+            }
+        }
     }
 }

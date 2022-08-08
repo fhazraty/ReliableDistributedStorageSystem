@@ -38,6 +38,17 @@
             using (var dsa = ECDsa.Create(param))
                 return dsa.SignHash(hash);
         }
+        public byte[] Sign(byte[] hash, byte[] privateKey)
+        {
+            var param = new ECParameters
+            {
+                D = privateKey,
+                Curve = Curve,
+            };
+
+            using (var dsa = ECDsa.Create(param))
+                return dsa.SignHash(hash);
+        }
 
         public bool Verify(byte[] hash, byte[] signature, byte[] publicKey)
         {

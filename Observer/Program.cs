@@ -19,7 +19,7 @@ var cManager = new ConnectionManager(new ObserverData()
     AddPort = observerAddPort,
     RemovePort = observerRemovePort,
     RemoveIp = observerRemoveIp,
-});
+},null);
 
 Thread addFullNodeThread = new Thread(new ThreadStart(cManager.ListenToAddIpPort));
 addFullNodeThread.Start();

@@ -17,17 +17,14 @@ namespace FullNode
         public string ReceiveIP { get; set; }
         public int SendPort { get; set; }
         public int ReceivePort { get; set; }
-        public ObserverData ObserverData { get; set; }
-        public ConnectionManager(string sendIp, int sendPort, string receiveIp, int receivePort, ObserverData observerData)
+        public ConnectionManager(string sendIp, int sendPort, string receiveIp, int receivePort)
         {
             this.SendIP = sendIp;
             this.SendPort = sendPort;
             this.ReceiveIP = receiveIp;
             this.ReceivePort = receivePort;
-            this.ObserverData = observerData;
         }
-
-        public IBaseResult RegisterOnObserver()
+        public IBaseResult RegisterOnObserver(ObserverData observerData)
         {
             try
             {
@@ -45,7 +42,7 @@ namespace FullNode
                     PublicKey = publicKey
                 });
 
-                TcpClient client = new TcpClient(ObserverData.AddIp, ObserverData.AddPort);
+                TcpClient client = new TcpClient(observerData.AddIp, observerData.AddPort);
                 NetworkStream nwStream = client.GetStream();
 
                 nwStream.Write(bytesToSend, 0, bytesToSend.Length);
@@ -68,8 +65,7 @@ namespace FullNode
                 };
             }
         }
-
-        public bool RemoveFromObserver()
+        public bool RemoveFromObserver(ObserverData observerData)
         {
             try
             {
@@ -81,7 +77,7 @@ namespace FullNode
                     SendPort = this.SendPort
                 });
 
-                TcpClient client = new TcpClient(ObserverData.RemoveIp, ObserverData.RemovePort);
+                TcpClient client = new TcpClient(observerData.RemoveIp, observerData.RemovePort);
                 NetworkStream nwStream = client.GetStream();
 
                 nwStream.Write(bytesToSend, 0, bytesToSend.Length);
@@ -97,6 +93,5 @@ namespace FullNode
                 return false;
             }
         }
-
     }
 }
