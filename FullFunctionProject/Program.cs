@@ -12,10 +12,10 @@ int receivePortStartRange = 6000;
 // 10 nodes and one observer
 // 0 means no connection
 
-List<List<int>> networkBandWidth = new List<List<int>>();
+List<List<long>> networkBandWidth = new List<List<long>>();
 for (int i = 0; i < 11; i++)
 {
-    List<int> row = new List<int>();
+    List<long> row = new List<long>();
     for (int j = 0; j < 11; j++)
     {
         if (i == j)
@@ -24,7 +24,7 @@ for (int i = 0; i < 11; i++)
         }
         else
         {
-            row.Add(1);
+            row.Add(1024*1024);
         }
     }
 
@@ -50,10 +50,10 @@ for (int i = 0; i < numberOfFullNodes; i++)
 {
     fullNodes.Add
     (
-        new FullNode.Node(observerData, "127.0.0.1",sendPortStartRange++,"127.0.0.1",receivePortStartRange++)
+        new FullNode.Node(observerData, "127.0.0.1",sendPortStartRange++,"127.0.0.1",receivePortStartRange++,networkBandWidth,i)
     );
 }
 
-fullNodes[0].SaveFile("",null,0,null);
+var res = fullNodes[0].SaveFile("I Walk Alone_v720P.mp4", File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"));
 
 

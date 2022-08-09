@@ -14,15 +14,15 @@ namespace Observer
         public bool StopThreadRequested { get; set; }
         public ObserverData ObserverData { get; set; }
         public FullNodesData FullNodesData { get; set; }
-        public List<List<int>> NetworkBandWidth { get; set; }
+        public List<List<long>> NetworkBandWidth { get; set; }
         public string FileStoragePath
         {
             get
             {
-                return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "\\P2PStorage.txt";
+                return @"c:\Miners\P2PStorage.txt";
             }
         }
-        public ConnectionManager(ObserverData oData, List<List<int>> networkBandWidth)
+        public ConnectionManager(ObserverData oData, List<List<long>> networkBandWidth)
         {
             this.ObserverData = oData;
             this.NetworkBandWidth = networkBandWidth;
@@ -140,37 +140,44 @@ namespace Observer
             {
                 try
                 {
-                    listenerAdd = new TcpListener(IPAddress.Parse(ObserverData.AddIp), ObserverData.AddPort);
-                    listenerAdd.Start();
-
-                    TcpClient client = listenerAdd.AcceptTcpClient();
-
-                    NetworkStream nwStream = client.GetStream();
-                    byte[] buffer = new byte[client.ReceiveBufferSize];
-
-                    byte[] data = new byte[1024];
-
-                    MemoryStream ms = new MemoryStream();
-                    int numBytesRead = nwStream.Read(data, 0, data.Length);
-                    while (numBytesRead > 0)
+                    lock (this)
                     {
-                        ms.Write(data, 0, numBytesRead);
+                        listenerAdd = new TcpListener(IPAddress.Parse(ObserverData.AddIp), ObserverData.AddPort);
+                        listenerAdd.Start();
 
-                        numBytesRead = nwStream.Read(data, 0, data.Length);
+                        TcpClient client = listenerAdd.AcceptTcpClient();
+
+                        NetworkStream nwStream = client.GetStream();
+                        byte[] buffer = new byte[client.ReceiveBufferSize];
+
+                        byte[] data = new byte[1024];
+
+                        MemoryStream ms = new MemoryStream();
+                        int numBytesRead = nwStream.Read(data, 0, data.Length);
+                        while (numBytesRead > 0)
+                        {
+                            ms.Write(data, 0, numBytesRead);
+
+                            numBytesRead = nwStream.Read(data, 0, data.Length);
+                        }
+
+                        var bytearray = ms.ToArray();
+                        ms.Close();
+                        ms.Dispose();
+                        client.Close();
+                        client.Dispose();
+                        listenerAdd.Stop();
+
+                        FullNodesRecord fNodeRecord = MessagePackSerializer.Deserialize<FullNodesRecord>(bytearray);
+
+                        AddNewRecord(fNodeRecord);
+
+                        
                     }
-
-                    FullNodesRecord fNodeRecord = MessagePackSerializer.Deserialize<FullNodesRecord>(ms.ToArray());
-
-                    AddNewRecord(fNodeRecord);
-
-                    client.Close();
-                    client.Dispose();
-                    listenerAdd.Stop();
                 }
                 catch (Exception ex)
                 {
-
-                    throw;
+                    string msg = ex.Message;
                 }
             }   
         }
@@ -209,8 +216,7 @@ namespace Observer
                 }
                 catch (Exception ex)
                 {
-
-                    throw;
+                    string msg = ex.Message;
                 }
             }
         }
@@ -240,14 +246,14 @@ namespace Observer
                         }
                         counter++;
                     }
-                    int sendSpeedFromObserverToFullNode = (NetworkBandWidth[10])[counter];
+                    long sendSpeedFromObserverToFullNode = (NetworkBandWidth[10])[counter];
 
                     NetworkStream nwStream = client.GetStream();
 
                     //Serialize in binary format
                     byte[] bytesToSend = MessagePackSerializer.Serialize(FullNodesData);
 
-                    int iterationCount = bytesToSend.Length / sendSpeedFromObserverToFullNode;
+                    long iterationCount = bytesToSend.Length / sendSpeedFromObserverToFullNode;
                     if (bytesToSend.Length % sendSpeedFromObserverToFullNode != 0)
                     {
                         iterationCount++;
@@ -259,11 +265,11 @@ namespace Observer
 
                         if (((i + 1) * sendSpeedFromObserverToFullNode) < bytesToSend.Length)
                         {
-                            nwStream.Write(bytesToSend, (i * sendSpeedFromObserverToFullNode), sendSpeedFromObserverToFullNode);
+                            nwStream.Write(bytesToSend, (int)(i * sendSpeedFromObserverToFullNode), (int)sendSpeedFromObserverToFullNode);
                         }
                         else
                         {
-                            nwStream.Write(bytesToSend, (i * sendSpeedFromObserverToFullNode), bytesToSend.Length - (i * sendSpeedFromObserverToFullNode));
+                            nwStream.Write(bytesToSend, (int)(i * sendSpeedFromObserverToFullNode), (int)(bytesToSend.Length - (i * sendSpeedFromObserverToFullNode)));
                         }
                         DateTime endSendingBuffer = DateTime.Now;
 
@@ -276,10 +282,11 @@ namespace Observer
 
                     nwStream.Close();
                     nwStream.Dispose();
+                    listenerBroadCast.Stop();
                 }
                 catch (Exception ex)
                 {
-                    throw;
+                    string msg = ex.Message;
                 }
             }
         }
@@ -288,6 +295,7 @@ namespace Observer
             StopThreadRequested = true;
             this.listenerAdd.Stop();
             this.listenerRemove.Stop();
+            this.listenerBroadCast.Stop();
         }
     }
 }

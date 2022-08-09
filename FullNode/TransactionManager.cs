@@ -57,18 +57,78 @@ namespace FullNode
             }
 
         }
-        public IBaseResult PropagateBlocks(List<Block> blocks, ObserverData observerData)
+        public IBaseResult PropagateBlocks(List<Block> blocks, ObserverData observerData,List<List<long>> networkBandWidth,int index)
         {
             try
             {
                 UpdateFullNodesData(observerData);
-
+                int k = 0;
                 foreach (var fullNode in FullNodesData.fullNodesRecords)
                 {
-                    //fullNode.ReceivePort
-                    //fullNode.ReceiveIP
-                }
+                    if(index == k)
+                    {
+                        k++;
+                        continue;
+                    }
+                    long speedBytePerSecond = networkBandWidth[index][k];
 
+                    for (int j = 0; j < blocks.Count; j++)
+                    {
+                        int retrier = 0;
+
+                        while (retrier < 10)
+                        {
+                            try
+                            {
+                                byte[] bytesToSend = MessagePackSerializer.Serialize(blocks[j]);
+
+                                //Prepare TCP/IP Connection
+                                TcpClient client = new TcpClient(fullNode.ReceiveIP, fullNode.ReceivePort);
+                                NetworkStream nwStream = client.GetStream();
+
+                                long iterationCount = bytesToSend.Length / speedBytePerSecond;
+                                if (bytesToSend.Length % speedBytePerSecond != 0)
+                                {
+                                    iterationCount++;
+                                }
+
+                                for (int i = 0; i < (int)iterationCount; i++)
+                                {
+                                    DateTime startSendingBuffer = DateTime.Now;
+
+                                    if (((i + 1) * speedBytePerSecond) < bytesToSend.Length)
+                                    {
+                                        nwStream.Write(bytesToSend, (int)(i * speedBytePerSecond), (int)speedBytePerSecond);
+                                    }
+                                    else
+                                    {
+                                        nwStream.Write(bytesToSend, (int)(i * speedBytePerSecond), (int)(bytesToSend.Length - (i * speedBytePerSecond)));
+                                    }
+                                    DateTime endSendingBuffer = DateTime.Now;
+
+                                    var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
+                                    if (timeTookToSend < 1000)
+                                    {
+                                        Thread.Sleep(1000 - (int)timeTookToSend);
+                                    }
+                                }
+
+                                nwStream.Close();
+                                nwStream.Dispose();
+                                client.Close();
+                                client.Dispose();
+                                retrier = 10;
+                            }
+                            catch (Exception ex)
+                            {
+                                string msg2 = ex.Message;
+                            }
+                            retrier++;
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    k++;
+                }
 
                 return new SendFileMode()
                 {

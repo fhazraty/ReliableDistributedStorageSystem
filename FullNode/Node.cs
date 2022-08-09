@@ -3,22 +3,34 @@ using Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Utilities;
 
 namespace FullNode
 {
-    public class Node
+    public class Node : IDisposable
     {
-        public Node(ObserverData observerData, string sendIp, int sendPort, string receiveIp, int receivePort)
+        public Node(
+            ObserverData observerData, 
+            string sendIp, 
+            int sendPort, 
+            string receiveIp, 
+            int receivePort,
+            List<List<long>> networkBandWidth,
+            int index
+            )
         {
-            Id = Guid.NewGuid();
-            MainPath = @"c:\Miners\";
-            StoragePath = MainPath + Id.ToString() + @"\";
+            this.Id = Guid.NewGuid();
+            this.Index = index;
+            this.MainPath = @"c:\Miners\";
+            this.StoragePath = MainPath + Id.ToString() + @"\";
             BuildPathIfNotExists();
             this.ObserverData = observerData;
-            this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort);
+            this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth, this.StoragePath);
+            this.TransactionManager = new TransactionManager();
             var res = this.ConnectionManager.RegisterOnObserver(this.ObserverData);
             if (res.Successful)
             {
@@ -28,7 +40,11 @@ namespace FullNode
             {
                 throw ((ErrorResult)res).ResultContainer;
             }
+
+            this.BlockReceiverThread = new Thread(new ThreadStart(this.ConnectionManager.BlockReceiver));
+            this.BlockReceiverThread.Start();
         }
+        public Thread BlockReceiverThread { get; set; }
         private void BuildPathIfNotExists()
         {
             if (!Directory.Exists(MainPath))
@@ -39,8 +55,13 @@ namespace FullNode
             {
                 Directory.CreateDirectory(StoragePath);
             }
+            if (!Directory.Exists(StoragePath + Id.ToString() + @"\"))
+            {
+                Directory.CreateDirectory(StoragePath + Id.ToString() + @"\");
+            }
         }
         public Guid Id { get; set; }
+        public int Index { get; set; }
         public int Version 
         { 
             get
@@ -52,6 +73,13 @@ namespace FullNode
         public string StoragePath { get; set; }
         private byte[] PrivateKey { get; set; }
         public ObserverData ObserverData { get; set; }
+        private byte[] GetHashOfBlock(Block block)
+        {
+            if (block == null) return null;
+            byte[] bytesOfBlock = MessagePackSerializer.Serialize(block);
+            var cHelper = new CryptographyHelper();
+            return cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), PrivateKey);
+        }
         private List<Block> BuildBlocks(byte[] file,string filename,Guid id, int version,long sequenceStart, byte[] hashPreviousBlock)
         {
             var block = new Block();
@@ -74,8 +102,6 @@ namespace FullNode
                     Id = id
                 };
 
-                var cHelper = new CryptographyHelper();
-
                 var blockHeader = new BlockHeader();
 
                 if (i == 0)
@@ -86,11 +112,9 @@ namespace FullNode
                 }
                 else
                 {
-                    byte[] bytesOfBlock = MessagePackSerializer.Serialize(previousBlock);
-
                     blockHeader = new BlockHeader()
                     {
-                        HashPreviousBlock = cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), PrivateKey)
+                        HashPreviousBlock = GetHashOfBlock(previousBlock)
                     };
                 }
 
@@ -109,10 +133,35 @@ namespace FullNode
 
             return blocks;
         }
-        public IBaseResult SaveFile(string filename,byte[] fileContent,long sequenceStart, byte[] hashPreviousBlock)
+        public Block? GetCurrentBlock()
+        {
+            var listOfFiles = Directory.GetFiles(StoragePath + Id.ToString() + @"\").ToList();
+            if (listOfFiles.Count == 0) return null;
+            var latestFile = listOfFiles.OrderByDescending(l => l.ToString()).ToArray()[0];
+            var latestBlockByteArray = File.ReadAllBytes(StoragePath + latestFile);
+            return MessagePackSerializer.Deserialize<Block>(latestBlockByteArray.ToArray());
+        }
+        private IBaseResult SaveFile(string filename,byte[] fileContent,long sequenceStart, byte[] hashPreviousBlock)
         {
             var blocks = BuildBlocks(fileContent,filename,this.Id,this.Version, sequenceStart, hashPreviousBlock);
-            return TransactionManager.PropagateBlocks(blocks, this.ObserverData);
+            return TransactionManager.PropagateBlocks(blocks, this.ObserverData, ConnectionManager.NetworkBandWidth, this.Index);
+        }
+        public IBaseResult SaveFile(string filename, byte[] fileContent)
+        {
+            var currentBlock = GetCurrentBlock();
+
+            long sequenceStart = 0;
+            if(currentBlock != null)
+            {
+                sequenceStart = currentBlock.Content.SequenceNumber + 1;
+            }
+
+            return SaveFile(filename, fileContent,sequenceStart,GetHashOfBlock(currentBlock));
+        }
+        public void Dispose()
+        {
+            this.ConnectionManager.ReceivingStopped = true;
+            this.BlockReceiverThread.Abort();
         }
         public ConnectionManager ConnectionManager { get; set; }
         public TransactionManager TransactionManager { get; set; }
