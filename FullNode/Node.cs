@@ -20,12 +20,13 @@ namespace FullNode
             string receiveIp, 
             int receivePort,
             List<List<long>> networkBandWidth,
-            int index
+            int index,
+            string mainPath
             )
         {
             this.Id = Guid.NewGuid();
             this.Index = index;
-            this.MainPath = @"c:\Miners\";
+            this.MainPath = mainPath;
             this.StoragePath = MainPath + Id.ToString() + @"\";
             BuildPathIfNotExists();
             this.ObserverData = observerData;

@@ -1,17 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Model
+﻿namespace Model
 {
     public class ObserverData
     {
-        public ObserverData()
-        {
-
-        }
         public ObserverData(string broadCastIp,int broadCastPort,string addIp,int addPort,string removeIp,int removePort)
         {
             this.BroadCastIp = broadCastIp;

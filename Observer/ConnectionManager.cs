@@ -15,20 +15,24 @@ namespace Observer
         public ObserverData ObserverData { get; set; }
         public FullNodesData FullNodesData { get; set; }
         public List<List<long>> NetworkBandWidth { get; set; }
-        public string FileStoragePath
-        {
-            get
-            {
-                return @"c:\Miners\P2PStorage.txt";
-            }
-        }
-        public ConnectionManager(ObserverData oData, List<List<long>> networkBandWidth)
+        public string MainPath { get; set; }
+        public string FileStoragePath { get; set; }
+        public ConnectionManager(ObserverData oData, List<List<long>> networkBandWidth, string fileStoragePath)
         {
             this.ObserverData = oData;
             this.NetworkBandWidth = networkBandWidth;
             this.StopThreadRequested = false;
+            this.MainPath = fileStoragePath;
+            this.FileStoragePath = this.MainPath + "P2PStorage.txt";
             FullNodesData = new FullNodesData();
             LoadAllDataFromDisk();
+        }
+        private void BuildPathIfNotExists()
+        {
+            if (!Directory.Exists(MainPath))
+            {
+                Directory.CreateDirectory(MainPath);
+            }
         }
         public bool AddNewRecord(FullNodesRecord record)
         {
