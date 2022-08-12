@@ -175,8 +175,6 @@ namespace Observer
                         FullNodesRecord fNodeRecord = MessagePackSerializer.Deserialize<FullNodesRecord>(bytearray);
 
                         AddNewRecord(fNodeRecord);
-
-                        
                     }
                 }
                 catch (Exception ex)
@@ -226,13 +224,13 @@ namespace Observer
         }
         public void ListenToBroadCastIpPort()
         {
+            listenerBroadCast = new TcpListener(IPAddress.Parse(ObserverData.BroadCastIp), ObserverData.BroadCastPort);
+            listenerBroadCast.Start();
+
             while (!StopThreadRequested)
             {
                 try
                 {
-                    listenerBroadCast = new TcpListener(IPAddress.Parse(ObserverData.BroadCastIp), ObserverData.BroadCastPort);
-                    listenerBroadCast.Start();
-
                     TcpClient client = listenerBroadCast.AcceptTcpClient();
 
                     IPEndPoint? remoteIpEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
@@ -252,45 +250,47 @@ namespace Observer
                     }
                     long sendSpeedFromObserverToFullNode = (NetworkBandWidth[10])[counter];
 
-                    NetworkStream nwStream = client.GetStream();
-
-                    //Serialize in binary format
-                    byte[] bytesToSend = MessagePackSerializer.Serialize(FullNodesData);
-
-                    long iterationCount = bytesToSend.Length / sendSpeedFromObserverToFullNode;
-                    if (bytesToSend.Length % sendSpeedFromObserverToFullNode != 0)
+                    
+                    using (NetworkStream nwStream = client.GetStream())
                     {
-                        iterationCount++;
+                        //Serialize in binary format
+                        byte[] bytesToSend = MessagePackSerializer.Serialize(FullNodesData);
+
+                        long iterationCount = bytesToSend.Length / sendSpeedFromObserverToFullNode;
+                        if (bytesToSend.Length % sendSpeedFromObserverToFullNode != 0)
+                        {
+                            iterationCount++;
+                        }
+
+                        for (int i = 0; i < iterationCount; i++)
+                        {
+                            DateTime startSendingBuffer = DateTime.Now;
+
+                            if (((i + 1) * sendSpeedFromObserverToFullNode) < bytesToSend.Length)
+                            {
+                                nwStream.Write(bytesToSend, (int)(i * sendSpeedFromObserverToFullNode), (int)sendSpeedFromObserverToFullNode);
+                            }
+                            else
+                            {
+                                nwStream.Write(bytesToSend, (int)(i * sendSpeedFromObserverToFullNode), (int)(bytesToSend.Length - (i * sendSpeedFromObserverToFullNode)));
+                            }
+                            DateTime endSendingBuffer = DateTime.Now;
+
+                            var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
+                            if (timeTookToSend < 1000)
+                            {
+                                Thread.Sleep(1000 - (int)timeTookToSend);
+                            }
+                        }
+
+                        nwStream.Close();
+                        nwStream.Dispose();
                     }
-
-                    for (int i = 0; i < iterationCount; i++)
-                    {
-                        DateTime startSendingBuffer = DateTime.Now;
-
-                        if (((i + 1) * sendSpeedFromObserverToFullNode) < bytesToSend.Length)
-                        {
-                            nwStream.Write(bytesToSend, (int)(i * sendSpeedFromObserverToFullNode), (int)sendSpeedFromObserverToFullNode);
-                        }
-                        else
-                        {
-                            nwStream.Write(bytesToSend, (int)(i * sendSpeedFromObserverToFullNode), (int)(bytesToSend.Length - (i * sendSpeedFromObserverToFullNode)));
-                        }
-                        DateTime endSendingBuffer = DateTime.Now;
-
-                        var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
-                        if (timeTookToSend < 1000)
-                        {
-                            Thread.Sleep(1000 - (int)timeTookToSend);
-                        }
-                    }
-
-                    nwStream.Close();
-                    nwStream.Dispose();
-                    listenerBroadCast.Stop();
                 }
                 catch (Exception ex)
                 {
-                    string msg = ex.Message;
+                    var msg = ex.Message;
+                    Console.WriteLine("here 4 : ListenToBroadCastIpPort problem" + msg);
                 }
             }
         }

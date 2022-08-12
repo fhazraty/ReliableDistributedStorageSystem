@@ -1,4 +1,5 @@
 ﻿using Model;
+using Observer;
 
 //Main path to store miners data
 var mainPath = @"c:\Miners\";
@@ -18,33 +19,23 @@ var receivePortStartRange = 6000;
 // 10 nodes and one observer
 // 0 means no connection
 var networkBandWidth = new List<List<long>>();
-for (int i = 0; i < 11; i++)
+for (int i = 0; i < numberOfFullNodes + 1; i++)
 {
     var row = new List<long>();
-    for (int j = 0; j < 11; j++)
+    for (int j = 0; j < numberOfFullNodes + 1; j++)
     {
         if (i == j) 
             row.Add(0); 
         else 
-            row.Add(2*1024*1024);
+            row.Add(10*1024*1024);
     }
     networkBandWidth.Add(row);
 }
-    
+
 // Starting observer
-var ocManager = new Observer.ConnectionManager(observerData,networkBandWidth, mainPath);
-
-var addFullNodeThread = new Thread(new ThreadStart(ocManager.ListenToAddIpPort));
-addFullNodeThread.Start();
-
-var removeFullNodeThread = new Thread(new ThreadStart(ocManager.ListenToRemoveIpPort));
-removeFullNodeThread.Start();
-
-var observeFullNodeThread = new Thread(new ThreadStart(ocManager.ListenToBroadCastIpPort));
-observeFullNodeThread.Start();
+var observerNode = new ObserverNode(observerData, networkBandWidth, mainPath);
 
 var fullNodes = new List<FullNode.Node>();
-
 // Initializing full nodes ranges
 for (int i = 0; i < numberOfFullNodes; i++)
 {
@@ -54,7 +45,9 @@ for (int i = 0; i < numberOfFullNodes; i++)
     );
 }
 
-//Submit file to network...
-var res = fullNodes[0].SaveFile("I Walk Alone_v720P.mp4", File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"));
-
+Parallel.ForEach(fullNodes, fullNode =>
+{
+    //Submit file to network...
+    var res = fullNode.SaveFile("I Walk Alone_v720P.mp4", File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"),100,100,100,100,50);
+});
 

@@ -142,22 +142,53 @@ namespace FullNode
             var latestBlockByteArray = File.ReadAllBytes(StoragePath + latestFile);
             return MessagePackSerializer.Deserialize<Block>(latestBlockByteArray.ToArray());
         }
-        private IBaseResult SaveFile(string filename,byte[] fileContent,long sequenceStart, byte[] hashPreviousBlock)
+        private IBaseResult SaveFile(
+            string filename,
+            byte[] fileContent,
+            long sequenceStart, 
+            byte[] hashPreviousBlock,
+            int sleepRetryObserver,
+            int numberOfRetryObserver,
+            int sleepRetrySendFile,
+            int numberOfRetrySendFile,
+            int randomizeRangeSleep)
         {
             var blocks = BuildBlocks(fileContent,filename,this.Id,this.Version, sequenceStart, hashPreviousBlock);
-            return TransactionManager.PropagateBlocks(blocks, this.ObserverData, ConnectionManager.NetworkBandWidth, this.Index);
+            return TransactionManager.PropagateBlocks(
+                blocks, 
+                this.ObserverData, 
+                ConnectionManager.NetworkBandWidth, 
+                this.Index, 
+                sleepRetryObserver,
+                numberOfRetryObserver,
+                sleepRetrySendFile,
+                numberOfRetrySendFile,
+                randomizeRangeSleep);
         }
-        public IBaseResult SaveFile(string filename, byte[] fileContent)
+        public IBaseResult SaveFile(
+            string filename, 
+            byte[] fileContent, 
+            int sleepRetryObserver,
+            int numberOfRetryObserver,
+            int sleepRetrySendFile,
+            int numberOfRetrySendFile,
+            int randomizeRangeSleep)
         {
             var currentBlock = GetCurrentBlock();
 
             long sequenceStart = 0;
-            if(currentBlock != null)
-            {
-                sequenceStart = currentBlock.Content.SequenceNumber + 1;
-            }
+            if(currentBlock != null)  sequenceStart = currentBlock.Content.SequenceNumber + 1; 
 
-            return SaveFile(filename, fileContent,sequenceStart,GetHashOfBlock(currentBlock));
+            return SaveFile(
+                filename, 
+                fileContent,
+                sequenceStart,
+                GetHashOfBlock(currentBlock),
+                sleepRetryObserver,
+                numberOfRetryObserver,
+                sleepRetrySendFile,
+                numberOfRetrySendFile,
+                randomizeRangeSleep);
         }
         public void Dispose()
         {

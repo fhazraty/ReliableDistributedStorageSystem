@@ -15,53 +15,70 @@ namespace FullNode
         public byte[] PrivateKey { get; set; }
         public byte[] PublicKey { get; set; }
         public FullNodesData FullNodesData { get; set; }
-        public IBaseResult UpdateFullNodesData(ObserverData observerData)
+        public IBaseResult UpdateFullNodesData(ObserverData observerData, int sleepRetryObserver, int numberOfRetryObserver,int randomizeRangeSleep)
         {
-            try
+            var retryCounter = 0;
+            while (retryCounter < numberOfRetryObserver)
             {
-                //Prepare TCP/IP Connection
-                TcpClient client = new TcpClient(observerData.BroadCastIp, observerData.BroadCastPort);
-                NetworkStream nwStream = client.GetStream();
-                byte[] buffer = new byte[client.ReceiveBufferSize];
-
-                //Read bytes ... 
-                byte[] data = new byte[1024];
-
-                MemoryStream ms = new MemoryStream();
-                int numBytesRead = nwStream.Read(data, 0, data.Length);
-                while (numBytesRead > 0)
+                try
                 {
-                    ms.Write(data, 0, numBytesRead);
+                    //Prepare TCP/IP Connection
+                    TcpClient client = new TcpClient(observerData.BroadCastIp, observerData.BroadCastPort);
+                    NetworkStream nwStream = client.GetStream();
+                    byte[] buffer = new byte[client.ReceiveBufferSize];
 
-                    numBytesRead = nwStream.Read(data, 0, data.Length);
+                    //Read bytes ... 
+                    byte[] data = new byte[1024];
+
+                    MemoryStream ms = new MemoryStream();
+                    int numBytesRead = nwStream.Read(data, 0, data.Length);
+                    while (numBytesRead > 0)
+                    {
+                        ms.Write(data, 0, numBytesRead);
+
+                        numBytesRead = nwStream.Read(data, 0, data.Length);
+                    }
+
+                    this.FullNodesData = MessagePackSerializer.Deserialize<FullNodesData>(ms.ToArray());
+
+                    nwStream.Close();
+                    nwStream.Dispose();
+
+                    return new Result()
+                    {
+                        Successful = true
+                    };
                 }
-
-                this.FullNodesData = MessagePackSerializer.Deserialize<FullNodesData>(ms.ToArray());
-
-                nwStream.Close();
-                nwStream.Dispose();
-
-                return new Result()
+                catch (Exception ex)
                 {
-                    Successful = true
-                };
+                    var msg = ex.Message;
+                    Console.WriteLine("here 1 : UpdateFullNodesData problem" + msg);
+                }
+                retryCounter++;
+                Random r = new Random();
+                Thread.Sleep(sleepRetryObserver* r.Next(randomizeRangeSleep));
             }
-            catch (Exception ex)
+            //Exception occured!
+            return new ErrorResult()
             {
-                //Exception occured!
-                return new ErrorResult()
-                {
-                    Successful = false,
-                    ResultContainer = ex
-                };
-            }
-
+                Successful = false,
+                ResultContainer = new Exception("cannot connect to observer...")
+            };
         }
-        public IBaseResult PropagateBlocks(List<Block> blocks, ObserverData observerData,List<List<long>> networkBandWidth,int index)
+        public IBaseResult PropagateBlocks(
+            List<Block> blocks, 
+            ObserverData observerData,
+            List<List<long>> networkBandWidth,
+            int index,
+            int sleepRetryObserver, 
+            int numberOfRetryObserver,
+            int sleepRetrySendFile,
+            int numberOfRetrySendFile,
+            int randomizeRangeSleep)
         {
             try
             {
-                UpdateFullNodesData(observerData);
+                UpdateFullNodesData(observerData, sleepRetryObserver, numberOfRetryObserver, randomizeRangeSleep);
                 int k = 0;
                 foreach (var fullNode in FullNodesData.fullNodesRecords)
                 {
@@ -76,7 +93,7 @@ namespace FullNode
                     {
                         int retrier = 0;
 
-                        while (retrier < 10)
+                        while (retrier < numberOfRetrySendFile)
                         {
                             try
                             {
@@ -117,14 +134,16 @@ namespace FullNode
                                 nwStream.Dispose();
                                 client.Close();
                                 client.Dispose();
-                                retrier = 10;
+                                retrier = numberOfRetrySendFile;
                             }
                             catch (Exception ex)
                             {
-                                string msg2 = ex.Message;
+                                var msg = ex.Message;
+                                Console.WriteLine("here 2 : PropagateBlocks problem" + msg);
                             }
                             retrier++;
-                            Thread.Sleep(1000);
+                            Random r = new Random();
+                            Thread.Sleep(sleepRetrySendFile*r.Next(randomizeRangeSleep));
                         }
                     }
                     k++;

@@ -116,14 +116,14 @@ namespace FullNode
         }
         public void BlockReceiver()
         {
+            //Listening ...
+            TcpListener listener = new TcpListener(IPAddress.Parse(this.ReceiveIP), this.ReceivePort);
+            listener.Start();
+
             while (!ReceivingStopped)
             {
                 try
                 {
-                    //Listening ...
-                    TcpListener listener = new TcpListener(IPAddress.Parse(this.ReceiveIP), this.ReceivePort);
-                    listener.Start();
-
                     //Accept connection ...
                     TcpClient client = listener.AcceptTcpClient();
 
@@ -174,11 +174,11 @@ namespace FullNode
                     //Closing connection ...
                     client.Close();
                     client.Dispose();
-                    listener.Stop();
                 }
                 catch (Exception ex)
                 {
-                    string msg = ex.Message;
+                    var msg = ex.Message;
+                    Console.WriteLine("here 5 : BlockReceiver problem" + msg);
                 }
             }
         }
