@@ -3,6 +3,7 @@ using Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,16 @@ namespace FullNode
     {
         public byte[] PrivateKey { get; set; }
         public byte[] PublicKey { get; set; }
+        public bool ReceivingStopped { get; set; }
+        public string StoragePath { get; set; }
         public FullNodesData FullNodesData { get; set; }
+        public ConnectionManager ConnectionManager { get; set; }
+        public TransactionManager(ConnectionManager connectionManager, string storagePath)
+        {
+            this.ConnectionManager = connectionManager;
+            ReceivingStopped = false;
+            this.StoragePath = storagePath;
+        }
         public IBaseResult UpdateFullNodesData(ObserverData observerData, int sleepRetryObserver, int numberOfRetryObserver,int randomizeRangeSleep)
         {
             var retryCounter = 0;
@@ -162,6 +172,75 @@ namespace FullNode
                     Successful = false,
                     ResultContainer = ex
                 };
+            }
+        }
+
+        public void BlockReceiver()
+        {
+            //Listening ...
+            TcpListener listener = new TcpListener(IPAddress.Parse(this.ConnectionManager.ReceiveIP), this.ConnectionManager.ReceivePort);
+            listener.Start();
+
+            while (!ReceivingStopped)
+            {
+                try
+                {
+                    //Accept connection ...
+                    TcpClient client = listener.AcceptTcpClient();
+
+                    //Get the incoming data through a network stream
+                    NetworkStream nwStream = client.GetStream();
+                    byte[] buffer = new byte[client.ReceiveBufferSize];
+
+                    //Read bytes ... 
+                    byte[] data = new byte[1024];
+
+                    MemoryStream ms = new MemoryStream();
+                    int numBytesRead = nwStream.Read(data, 0, data.Length);
+                    while (numBytesRead > 0)
+                    {
+                        ms.Write(data, 0, numBytesRead);
+
+                        numBytesRead = nwStream.Read(data, 0, data.Length);
+                    }
+
+                    var msbyte = ms.ToArray();
+
+                    ms.Close();
+                    ms.Dispose();
+
+                    Block receivedBlock = MessagePackSerializer.Deserialize<Block>(msbyte);
+
+                    string pathToStore = StoragePath + receivedBlock.Content.Id.ToString();
+                    if (!Directory.Exists(pathToStore))
+                    {
+                        Directory.CreateDirectory(pathToStore);
+                    }
+                    string fullPath = pathToStore + @"\" + receivedBlock.Content.SequenceNumber;
+
+                    try
+                    {
+                        File.Delete(fullPath);
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+
+                    //Storing data on disk ...
+                    using (var fs = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write))
+                    {
+                        fs.Write(msbyte, 0, msbyte.Length);
+                    }
+
+                    //Closing connection ...
+                    client.Close();
+                    client.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    var msg = ex.Message;
+                    Console.WriteLine("here 5 : BlockReceiver problem" + msg);
+                }
             }
         }
     }

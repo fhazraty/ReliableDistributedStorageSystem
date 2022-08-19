@@ -30,8 +30,8 @@ namespace FullNode
             this.StoragePath = MainPath + Id.ToString() + @"\";
             BuildPathIfNotExists();
             this.ObserverData = observerData;
-            this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth, this.StoragePath);
-            this.TransactionManager = new TransactionManager();
+            this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth);
+            this.TransactionManager = new TransactionManager(this.ConnectionManager, this.StoragePath);
             var res = this.ConnectionManager.RegisterOnObserver(this.ObserverData);
             if (res.Successful)
             {
@@ -42,7 +42,7 @@ namespace FullNode
                 throw ((ErrorResult)res).ResultContainer;
             }
 
-            this.BlockReceiverThread = new Thread(new ThreadStart(this.ConnectionManager.BlockReceiver));
+            this.BlockReceiverThread = new Thread(new ThreadStart(this.TransactionManager.BlockReceiver));
             this.BlockReceiverThread.Start();
         }
         public Thread BlockReceiverThread { get; set; }
@@ -154,6 +154,33 @@ namespace FullNode
             int randomizeRangeSleep)
         {
             var blocks = BuildBlocks(fileContent,filename,this.Id,this.Version, sequenceStart, hashPreviousBlock);
+
+            foreach (var block in blocks)
+            {
+                string pathToStore = StoragePath + Id.ToString() + @"\";
+                if (!Directory.Exists(pathToStore))
+                {
+                    Directory.CreateDirectory(pathToStore);
+                }
+                string fullPath = pathToStore + @"\" + block.Content.SequenceNumber;
+
+                try
+                {
+                    File.Delete(fullPath);
+                }
+                catch (Exception ex)
+                {
+                }
+
+                var msbyte = MessagePackSerializer.Serialize<Block>(block);
+
+                //Storing data on local disk ...
+                using (var fs = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write))
+                {
+                    fs.Write(msbyte, 0, msbyte.Length);
+                }
+            }
+
             return TransactionManager.PropagateBlocks(
                 blocks, 
                 this.ObserverData, 
@@ -192,7 +219,7 @@ namespace FullNode
         }
         public void Dispose()
         {
-            this.ConnectionManager.ReceivingStopped = true;
+            this.TransactionManager.ReceivingStopped = true;
             this.BlockReceiverThread.Abort();
         }
         public ConnectionManager ConnectionManager { get; set; }

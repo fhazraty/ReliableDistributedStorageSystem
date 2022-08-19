@@ -144,38 +144,36 @@ namespace Observer
             {
                 try
                 {
-                    lock (this)
+
+                    listenerAdd = new TcpListener(IPAddress.Parse(ObserverData.AddIp), ObserverData.AddPort);
+                    listenerAdd.Start();
+
+                    TcpClient client = listenerAdd.AcceptTcpClient();
+
+                    NetworkStream nwStream = client.GetStream();
+                    byte[] buffer = new byte[client.ReceiveBufferSize];
+
+                    byte[] data = new byte[1024];
+
+                    MemoryStream ms = new MemoryStream();
+                    int numBytesRead = nwStream.Read(data, 0, data.Length);
+                    while (numBytesRead > 0)
                     {
-                        listenerAdd = new TcpListener(IPAddress.Parse(ObserverData.AddIp), ObserverData.AddPort);
-                        listenerAdd.Start();
+                        ms.Write(data, 0, numBytesRead);
 
-                        TcpClient client = listenerAdd.AcceptTcpClient();
-
-                        NetworkStream nwStream = client.GetStream();
-                        byte[] buffer = new byte[client.ReceiveBufferSize];
-
-                        byte[] data = new byte[1024];
-
-                        MemoryStream ms = new MemoryStream();
-                        int numBytesRead = nwStream.Read(data, 0, data.Length);
-                        while (numBytesRead > 0)
-                        {
-                            ms.Write(data, 0, numBytesRead);
-
-                            numBytesRead = nwStream.Read(data, 0, data.Length);
-                        }
-
-                        var bytearray = ms.ToArray();
-                        ms.Close();
-                        ms.Dispose();
-                        client.Close();
-                        client.Dispose();
-                        listenerAdd.Stop();
-
-                        FullNodesRecord fNodeRecord = MessagePackSerializer.Deserialize<FullNodesRecord>(bytearray);
-
-                        AddNewRecord(fNodeRecord);
+                        numBytesRead = nwStream.Read(data, 0, data.Length);
                     }
+
+                    var bytearray = ms.ToArray();
+                    ms.Close();
+                    ms.Dispose();
+                    client.Close();
+                    client.Dispose();
+                    listenerAdd.Stop();
+
+                    FullNodesRecord fNodeRecord = MessagePackSerializer.Deserialize<FullNodesRecord>(bytearray);
+
+                    AddNewRecord(fNodeRecord);
                 }
                 catch (Exception ex)
                 {
