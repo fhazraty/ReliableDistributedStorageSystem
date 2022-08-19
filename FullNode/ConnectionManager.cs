@@ -13,21 +13,21 @@ namespace FullNode
 {
     public class ConnectionManager
     {
-        
+        public Guid Id { get; set; }
         public string SendIP { get; set; }
         public string ReceiveIP { get; set; }
         public int SendPort { get; set; }
         public int ReceivePort { get; set; }
         public List<List<long>> NetworkBandWidth { get; set; }
         
-        public ConnectionManager(string sendIp, int sendPort, string receiveIp, int receivePort, List<List<long>> networkBandWidth)
+        public ConnectionManager(string sendIp, int sendPort, string receiveIp, int receivePort, List<List<long>> networkBandWidth,Guid id)
         {
             this.SendIP = sendIp;
             this.SendPort = sendPort;
             this.ReceiveIP = receiveIp;
             this.ReceivePort = receivePort;
             this.NetworkBandWidth = networkBandWidth;
-            
+            this.Id = id;
         }
         public IBaseResult RegisterOnObserver(ObserverData observerData)
         {
@@ -47,7 +47,8 @@ namespace FullNode
                         ReceiveIP = this.ReceiveIP,
                         ReceivePort = this.ReceivePort,
                         SendPort = this.SendPort,
-                        PublicKey = publicKey
+                        PublicKey = publicKey,
+                        Id = this.Id
                     });
 
                     TcpClient client = new TcpClient(observerData.AddIp, observerData.AddPort);

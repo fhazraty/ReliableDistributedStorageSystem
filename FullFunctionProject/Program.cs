@@ -41,7 +41,18 @@ for (int i = 0; i < numberOfFullNodes; i++)
 {
     fullNodes.Add
     (
-        new FullNode.Node(observerData, "127.0.0.1", sendPortStartRange++, "127.0.0.1", receivePortStartRange++, networkBandWidth, i, mainPath)
+        new FullNode.Node(
+            observerData, 
+            "127.0.0.1", 
+            sendPortStartRange++, 
+            "127.0.0.1", 
+            receivePortStartRange++, 
+            networkBandWidth, 
+            i, 
+            mainPath,
+            100,
+            100,
+            50)
     );
 }
 

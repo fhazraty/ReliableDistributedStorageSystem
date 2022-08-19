@@ -21,8 +21,10 @@ namespace FullNode
             int receivePort,
             List<List<long>> networkBandWidth,
             int index,
-            string mainPath
-            )
+            string mainPath,
+            int sleepRetryObserver,
+            int numberOfRetryObserver,
+            int randomizeRangeSleep)
         {
             this.Id = Guid.NewGuid();
             this.Index = index;
@@ -30,8 +32,14 @@ namespace FullNode
             this.StoragePath = MainPath + Id.ToString() + @"\";
             BuildPathIfNotExists();
             this.ObserverData = observerData;
-            this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth);
-            this.TransactionManager = new TransactionManager(this.ConnectionManager, this.StoragePath);
+            this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth, this.Id);
+            this.TransactionManager = new TransactionManager(
+                this.ConnectionManager, 
+                this.StoragePath, 
+                observerData,
+                sleepRetryObserver,
+                numberOfRetryObserver,
+                randomizeRangeSleep);
             var res = this.ConnectionManager.RegisterOnObserver(this.ObserverData);
             if (res.Successful)
             {

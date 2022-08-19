@@ -19,11 +19,18 @@ namespace FullNode
         public string StoragePath { get; set; }
         public FullNodesData FullNodesData { get; set; }
         public ConnectionManager ConnectionManager { get; set; }
-        public TransactionManager(ConnectionManager connectionManager, string storagePath)
+        public TransactionManager(
+            ConnectionManager connectionManager, 
+            string storagePath, 
+            ObserverData observerData, 
+            int sleepRetryObserver, 
+            int numberOfRetryObserver, 
+            int randomizeRangeSleep)
         {
             this.ConnectionManager = connectionManager;
             ReceivingStopped = false;
             this.StoragePath = storagePath;
+            UpdateFullNodesData(observerData, sleepRetryObserver, numberOfRetryObserver, randomizeRangeSleep);
         }
         public IBaseResult UpdateFullNodesData(ObserverData observerData, int sleepRetryObserver, int numberOfRetryObserver,int randomizeRangeSleep)
         {
@@ -175,6 +182,46 @@ namespace FullNode
             }
         }
 
+        public bool CheckTheHashIsValid(Block newblock)
+        {
+            try
+            {
+                if (newblock.Content.SequenceNumber == 0)
+                {
+                    if (newblock.Header.HashPreviousBlock == null)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+
+                }
+                var currentBlock = GetCurrentBlock(newblock.Content.Id);
+                byte[] bytesOfBlock = MessagePackSerializer.Serialize(currentBlock);
+
+                var fNodeData = this.FullNodesData.fullNodesRecords.FirstOrDefault(f => f.Id == newblock.Content.Id);
+
+                if (fNodeData == null) return false;
+
+                var cHelper = new CryptographyHelper();
+
+                return cHelper.Verify(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), newblock.Header.HashPreviousBlock, fNodeData.PublicKey); ;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        public Block? GetCurrentBlock(Guid id)
+        {
+            var listOfFiles = Directory.GetFiles(StoragePath + id.ToString() + @"\").ToList();
+            if (listOfFiles.Count == 0) return null;
+            var latestFile = listOfFiles.OrderByDescending(l => l.ToString()).ToArray()[0];
+            var latestBlockByteArray = File.ReadAllBytes(latestFile);
+            return MessagePackSerializer.Deserialize<Block>(latestBlockByteArray.ToArray());
+        }
         public void BlockReceiver()
         {
             //Listening ...
@@ -210,6 +257,11 @@ namespace FullNode
                     ms.Dispose();
 
                     Block receivedBlock = MessagePackSerializer.Deserialize<Block>(msbyte);
+
+                    if (!CheckTheHashIsValid(receivedBlock))
+                    {
+                        continue;
+                    }
 
                     string pathToStore = StoragePath + receivedBlock.Content.Id.ToString();
                     if (!Directory.Exists(pathToStore))
