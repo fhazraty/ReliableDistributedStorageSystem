@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Utilities;
@@ -13,24 +14,42 @@ namespace FullNode
 {
     public class TransactionManager
     {
-        public byte[] PrivateKey { get; set; }
-        public byte[] PublicKey { get; set; }
         public bool ReceivingStopped { get; set; }
+        public bool SyncingStopped { get; set; }
         public string StoragePath { get; set; }
         public FullNodesData FullNodesData { get; set; }
         public ConnectionManager ConnectionManager { get; set; }
+        public ObserverData ObserverData { get; set; }
+        public int SleepRetryObserver { get; set; }
+        public int NumberOfRetryObserver { get; set; }
+        public int RandomizeRangeSleep { get; set; }
+        public byte[] PrivateKey { get; set; }
+        public int Index { get; set; }
+        public List<List<long>> NetworkBandWidth { get; set; }
         public TransactionManager(
             ConnectionManager connectionManager, 
             string storagePath, 
             ObserverData observerData, 
             int sleepRetryObserver, 
             int numberOfRetryObserver, 
-            int randomizeRangeSleep)
+            int randomizeRangeSleep,
+            byte[] privateKey,
+            int index,
+            List<List<long>> networkBandWidth)
         {
+            this.FullNodesData = new FullNodesData();
             this.ConnectionManager = connectionManager;
             ReceivingStopped = false;
+            SyncingStopped = false;
             this.StoragePath = storagePath;
-            UpdateFullNodesData(observerData, sleepRetryObserver, numberOfRetryObserver, randomizeRangeSleep);
+            this.ObserverData = observerData;
+            this.SleepRetryObserver = sleepRetryObserver;
+            this.NumberOfRetryObserver = numberOfRetryObserver;
+            this.RandomizeRangeSleep = randomizeRangeSleep;
+            this.PrivateKey = privateKey;
+            this.Index = index;
+            this.NetworkBandWidth = networkBandWidth;
+            UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
         }
         public IBaseResult UpdateFullNodesData(ObserverData observerData, int sleepRetryObserver, int numberOfRetryObserver,int randomizeRangeSleep)
         {
@@ -82,6 +101,63 @@ namespace FullNode
                 ResultContainer = new Exception("cannot connect to observer...")
             };
         }
+
+        private void SendBytes(byte[] bytesToSend,string iP,int port,int numberOfRetrySendFile,long speedBytePerSecond,int sleepRetrySendFile,int randomizeRangeSleep)
+        {
+            int retrier = 0;
+            while (retrier < numberOfRetrySendFile)
+            {
+                try
+                {
+                    //Prepare TCP/IP Connection
+                    TcpClient client = new TcpClient(iP, port);
+                    NetworkStream nwStream = client.GetStream();
+
+                    long iterationCount = bytesToSend.Length / speedBytePerSecond;
+                    if (bytesToSend.Length % speedBytePerSecond != 0)
+                    {
+                        iterationCount++;
+                    }
+
+                    for (int i = 0; i < (int)iterationCount; i++)
+                    {
+                        DateTime startSendingBuffer = DateTime.Now;
+
+                        if (((i + 1) * speedBytePerSecond) < bytesToSend.Length)
+                        {
+                            nwStream.Write(bytesToSend, (int)(i * speedBytePerSecond), (int)speedBytePerSecond);
+                        }
+                        else
+                        {
+                            nwStream.Write(bytesToSend, (int)(i * speedBytePerSecond), (int)(bytesToSend.Length - (i * speedBytePerSecond)));
+                        }
+                        DateTime endSendingBuffer = DateTime.Now;
+
+                        var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
+                        if (timeTookToSend < 1000)
+                        {
+                            Thread.Sleep(1000 - (int)timeTookToSend);
+                        }
+                    }
+
+                    nwStream.Close();
+                    nwStream.Dispose();
+                    client.Close();
+                    client.Dispose();
+                    retrier = numberOfRetrySendFile;
+                }
+                catch (Exception ex)
+                {
+                    var msg = ex.Message;
+                    Console.WriteLine("here 2 : PropagateBlocks problem" + msg);
+                }
+                retrier++;
+                Random r = new Random();
+                Thread.Sleep(sleepRetrySendFile * r.Next(randomizeRangeSleep));
+            }
+        }
+
+
         public IBaseResult PropagateBlocks(
             List<Block> blocks, 
             ObserverData observerData,
@@ -108,60 +184,9 @@ namespace FullNode
 
                     for (int j = 0; j < blocks.Count; j++)
                     {
-                        int retrier = 0;
+                        byte[] bytesToSend = MessagePackSerializer.Serialize(blocks[j]);
 
-                        while (retrier < numberOfRetrySendFile)
-                        {
-                            try
-                            {
-                                byte[] bytesToSend = MessagePackSerializer.Serialize(blocks[j]);
-
-                                //Prepare TCP/IP Connection
-                                TcpClient client = new TcpClient(fullNode.ReceiveIP, fullNode.ReceivePort);
-                                NetworkStream nwStream = client.GetStream();
-
-                                long iterationCount = bytesToSend.Length / speedBytePerSecond;
-                                if (bytesToSend.Length % speedBytePerSecond != 0)
-                                {
-                                    iterationCount++;
-                                }
-
-                                for (int i = 0; i < (int)iterationCount; i++)
-                                {
-                                    DateTime startSendingBuffer = DateTime.Now;
-
-                                    if (((i + 1) * speedBytePerSecond) < bytesToSend.Length)
-                                    {
-                                        nwStream.Write(bytesToSend, (int)(i * speedBytePerSecond), (int)speedBytePerSecond);
-                                    }
-                                    else
-                                    {
-                                        nwStream.Write(bytesToSend, (int)(i * speedBytePerSecond), (int)(bytesToSend.Length - (i * speedBytePerSecond)));
-                                    }
-                                    DateTime endSendingBuffer = DateTime.Now;
-
-                                    var timeTookToSend = endSendingBuffer.Subtract(startSendingBuffer).TotalMilliseconds;
-                                    if (timeTookToSend < 1000)
-                                    {
-                                        Thread.Sleep(1000 - (int)timeTookToSend);
-                                    }
-                                }
-
-                                nwStream.Close();
-                                nwStream.Dispose();
-                                client.Close();
-                                client.Dispose();
-                                retrier = numberOfRetrySendFile;
-                            }
-                            catch (Exception ex)
-                            {
-                                var msg = ex.Message;
-                                Console.WriteLine("here 2 : PropagateBlocks problem" + msg);
-                            }
-                            retrier++;
-                            Random r = new Random();
-                            Thread.Sleep(sleepRetrySendFile*r.Next(randomizeRangeSleep));
-                        }
+                        SendBytes(bytesToSend, fullNode.ReceiveIP, fullNode.ReceivePort, numberOfRetrySendFile, speedBytePerSecond, sleepRetrySendFile, randomizeRangeSleep);
                     }
                     k++;
                 }
@@ -181,7 +206,6 @@ namespace FullNode
                 };
             }
         }
-
         public bool CheckTheHashIsValid(Block newblock)
         {
             try
@@ -256,32 +280,54 @@ namespace FullNode
                     ms.Close();
                     ms.Dispose();
 
-                    Block receivedBlock = MessagePackSerializer.Deserialize<Block>(msbyte);
-
-                    if (!CheckTheHashIsValid(receivedBlock))
-                    {
-                        continue;
-                    }
-
-                    string pathToStore = StoragePath + receivedBlock.Content.Id.ToString();
-                    if (!Directory.Exists(pathToStore))
-                    {
-                        Directory.CreateDirectory(pathToStore);
-                    }
-                    string fullPath = pathToStore + @"\" + receivedBlock.Content.SequenceNumber;
+                    Block receivedBlock = null;
+                    BlockStorageStatusListMessage blockStorageStatusListMessage = null;
 
                     try
                     {
-                        File.Delete(fullPath);
+                        receivedBlock = MessagePackSerializer.Deserialize<Block>(msbyte);
                     }
-                    catch (Exception ex)
+                    catch{}
+
+                    try
                     {
+                        blockStorageStatusListMessage = MessagePackSerializer.Deserialize<BlockStorageStatusListMessage>(msbyte);
+                    }
+                    catch{}
+
+
+                    if (receivedBlock != null)
+                    { 
+                        if (!CheckTheHashIsValid(receivedBlock))
+                        {
+                            continue;
+                        }
+
+                        string pathToStore = StoragePath + receivedBlock.Content.Id.ToString();
+                        if (!Directory.Exists(pathToStore))
+                        {
+                            Directory.CreateDirectory(pathToStore);
+                        }
+                        string fullPath = pathToStore + @"\" + receivedBlock.Content.SequenceNumber;
+
+                        try
+                        {
+                            File.Delete(fullPath);
+                        }
+                        catch (Exception ex)
+                        {
+                        }
+
+                        //Storing data on disk ...
+                        using (var fs = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write))
+                        {
+                            fs.Write(msbyte, 0, msbyte.Length);
+                        }
                     }
 
-                    //Storing data on disk ...
-                    using (var fs = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write))
+                    if(blockStorageStatusListMessage != null)
                     {
-                        fs.Write(msbyte, 0, msbyte.Length);
+                        //Continue coding here ...
                     }
 
                     //Closing connection ...
@@ -292,6 +338,82 @@ namespace FullNode
                 {
                     var msg = ex.Message;
                     Console.WriteLine("here 5 : BlockReceiver problem" + msg);
+                }
+            }
+        }
+        public void ValidateCurrentBlocks()
+        {
+
+        }
+        public List<BlockStorageStatus> GetCurrentLocalStatus()
+        {
+            var list = new List<BlockStorageStatus>();
+
+            var pathList = Directory.GetFiles(this.StoragePath, "*", SearchOption.AllDirectories);
+            foreach (var path in pathList)
+            {
+                var status = new BlockStorageStatus();
+                status.Id = Guid.Parse(path.Split('\\')[3]);
+                status.SequenceNumber = int.Parse(Path.GetFileNameWithoutExtension(path));
+                list.Add(status);
+            }
+
+            return list;
+        }
+        public void SendCurrentStatusToSync(
+            FullNodesRecord fnRecord, 
+            List<BlockStorageStatus> statuses,
+            List<List<long>> networkBandWidth,
+            int index,
+            int sleepRetrySendFile,
+            int numberOfRetrySendFile,
+            int randomizeRangeSleep)
+        {
+            int k = 0;
+            foreach (var fullNode in FullNodesData.fullNodesRecords)
+            {
+                if (index == k)
+                {
+                    k++;
+                    continue;
+                }
+                long speedBytePerSecond = networkBandWidth[index][k];
+
+                var blockStorageStatusList = new BlockStorageStatusList()
+                {
+                    BlockStorageStatuses = statuses
+                };
+
+                byte[] bytesOfblockStorageStatusList = MessagePackSerializer.Serialize(blockStorageStatusList);
+
+                var cHelper = new CryptographyHelper();
+
+                var msg = new BlockStorageStatusListMessage()
+                {
+                    BlockStorageStatusList = blockStorageStatusList,
+                    HashSignature = cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfblockStorageStatusList, 0, bytesOfblockStorageStatusList.Length), PrivateKey)
+                };
+
+                byte[] bytesOfBlockStorageStatusListMessage = MessagePackSerializer.Serialize(msg);
+
+                SendBytes(bytesOfBlockStorageStatusListMessage, fnRecord.ReceiveIP, fnRecord.ReceivePort, numberOfRetrySendFile, speedBytePerSecond, sleepRetrySendFile, randomizeRangeSleep);
+            }
+        }
+        public void BlockSync()
+        {
+            while (!ReceivingStopped)
+            {
+                Thread.Sleep(30000);
+
+                ValidateCurrentBlocks();
+
+                var status = GetCurrentLocalStatus();
+
+                UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
+
+                foreach (var fnRecord in FullNodesData.fullNodesRecords)
+                {
+                    SendCurrentStatusToSync(fnRecord, status,this.NetworkBandWidth, this.Index, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
                 }
             }
         }

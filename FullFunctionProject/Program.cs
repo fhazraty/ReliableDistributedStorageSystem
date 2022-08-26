@@ -59,6 +59,6 @@ for (int i = 0; i < numberOfFullNodes; i++)
 Parallel.ForEach(fullNodes, fullNode =>
 {
     //Submit file to network...
-    var res = fullNode.SaveFile("I Walk Alone_v720P.mp4", File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"),100,100,100,100,50);
+    var res = fullNode.SaveFile("I Walk Alone_v720P.mp4", File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"),100,100,100,2000,50);
 });
 

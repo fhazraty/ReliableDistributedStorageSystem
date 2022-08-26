@@ -33,13 +33,7 @@ namespace FullNode
             BuildPathIfNotExists();
             this.ObserverData = observerData;
             this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth, this.Id);
-            this.TransactionManager = new TransactionManager(
-                this.ConnectionManager, 
-                this.StoragePath, 
-                observerData,
-                sleepRetryObserver,
-                numberOfRetryObserver,
-                randomizeRangeSleep);
+            
             var res = this.ConnectionManager.RegisterOnObserver(this.ObserverData);
             if (res.Successful)
             {
@@ -50,10 +44,25 @@ namespace FullNode
                 throw ((ErrorResult)res).ResultContainer;
             }
 
+            this.TransactionManager = new TransactionManager(
+                this.ConnectionManager,
+                this.StoragePath,
+                observerData,
+                sleepRetryObserver,
+                numberOfRetryObserver,
+                randomizeRangeSleep,
+                this.PrivateKey,
+                this.Index,
+                networkBandWidth);
+
             this.BlockReceiverThread = new Thread(new ThreadStart(this.TransactionManager.BlockReceiver));
             this.BlockReceiverThread.Start();
+
+            this.BlockSyncThread = new Thread(new ThreadStart(this.TransactionManager.BlockSync));
+            this.BlockSyncThread.Start();
         }
         public Thread BlockReceiverThread { get; set; }
+        public Thread BlockSyncThread { get; set; }
         private void BuildPathIfNotExists()
         {
             if (!Directory.Exists(MainPath))
@@ -228,6 +237,7 @@ namespace FullNode
         public void Dispose()
         {
             this.TransactionManager.ReceivingStopped = true;
+            this.TransactionManager.SyncingStopped = true;
             this.BlockReceiverThread.Abort();
         }
         public ConnectionManager ConnectionManager { get; set; }
