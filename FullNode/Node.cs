@@ -29,7 +29,7 @@ namespace FullNode
             this.Id = Guid.NewGuid();
             this.Index = index;
             this.MainPath = mainPath;
-            this.StoragePath = MainPath + Id.ToString() + @"\";
+            this.StoragePath = MainPath + Id.ToString() + @"\"; // c:\Miners\IdOfFullNode\
             BuildPathIfNotExists();
             this.ObserverData = observerData;
             this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth, this.Id);
@@ -46,7 +46,7 @@ namespace FullNode
 
             this.TransactionManager = new TransactionManager(
                 this.ConnectionManager,
-                this.StoragePath,
+                this.StoragePath, // c:\Miners\IdOfFullNode\
                 observerData,
                 sleepRetryObserver,
                 numberOfRetryObserver,
@@ -153,6 +153,8 @@ namespace FullNode
         }
         public Block? GetCurrentBlock()
         {
+            BuildPathIfNotExists();
+
             var listOfFiles = Directory.GetFiles(StoragePath + Id.ToString() + @"\").ToList();
             if (listOfFiles.Count == 0) return null;
             var latestFile = listOfFiles.OrderByDescending(l => l.ToString()).ToArray()[0];

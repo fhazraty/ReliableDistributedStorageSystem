@@ -16,7 +16,7 @@ namespace FullNode
     {
         public bool ReceivingStopped { get; set; }
         public bool SyncingStopped { get; set; }
-        public string StoragePath { get; set; }
+        public string StoragePath { get; set; }  // c:\Miners\IdOfFullNode\
         public FullNodesData FullNodesData { get; set; }
         public ConnectionManager ConnectionManager { get; set; }
         public ObserverData ObserverData { get; set; }
@@ -28,7 +28,7 @@ namespace FullNode
         public List<List<long>> NetworkBandWidth { get; set; }
         public TransactionManager(
             ConnectionManager connectionManager, 
-            string storagePath, 
+            string storagePath, // c:\Miners\IdOfFullNode\
             ObserverData observerData, 
             int sleepRetryObserver, 
             int numberOfRetryObserver, 
@@ -41,7 +41,7 @@ namespace FullNode
             this.ConnectionManager = connectionManager;
             ReceivingStopped = false;
             SyncingStopped = false;
-            this.StoragePath = storagePath;
+            this.StoragePath = storagePath;  // c:\Miners\IdOfFullNode\
             this.ObserverData = observerData;
             this.SleepRetryObserver = sleepRetryObserver;
             this.NumberOfRetryObserver = numberOfRetryObserver;
@@ -157,7 +157,6 @@ namespace FullNode
             }
         }
 
-
         public IBaseResult PropagateBlocks(
             List<Block> blocks, 
             ObserverData observerData,
@@ -206,7 +205,7 @@ namespace FullNode
                 };
             }
         }
-        public bool CheckTheHashIsValid(Block newblock)
+        public bool CheckTheHashIsValid(Block newblock,bool reCheck)
         {
             try
             {
@@ -222,7 +221,17 @@ namespace FullNode
                     }
 
                 }
-                var currentBlock = GetCurrentBlock(newblock.Content.Id);
+
+                Block currentBlock = null;
+                if (reCheck)
+                {
+                    currentBlock = GetPreviousBlock(newblock.Content.Id,newblock.Content.SequenceNumber);
+                }
+                else
+                {
+                    currentBlock = GetCurrentBlock(newblock.Content.Id);
+                }
+                    
                 byte[] bytesOfBlock = MessagePackSerializer.Serialize(currentBlock);
 
                 var fNodeData = this.FullNodesData.fullNodesRecords.FirstOrDefault(f => f.Id == newblock.Content.Id);
@@ -244,6 +253,15 @@ namespace FullNode
             if (listOfFiles.Count == 0) return null;
             var latestFile = listOfFiles.OrderByDescending(l => l.ToString()).ToArray()[0];
             var latestBlockByteArray = File.ReadAllBytes(latestFile);
+            return MessagePackSerializer.Deserialize<Block>(latestBlockByteArray.ToArray());
+        }
+        public Block? GetPreviousBlock(Guid id, long sequenceNumber)
+        {
+            if(sequenceNumber == 0)
+            {
+                return null;
+            }
+            var latestBlockByteArray = File.ReadAllBytes(StoragePath + id.ToString() + @"\" + (sequenceNumber-1).ToString());
             return MessagePackSerializer.Deserialize<Block>(latestBlockByteArray.ToArray());
         }
         public void BlockReceiver()
@@ -298,7 +316,7 @@ namespace FullNode
 
                     if (receivedBlock != null)
                     { 
-                        if (!CheckTheHashIsValid(receivedBlock))
+                        if (!CheckTheHashIsValid(receivedBlock,false))
                         {
                             continue;
                         }
@@ -327,7 +345,63 @@ namespace FullNode
 
                     if(blockStorageStatusListMessage != null)
                     {
-                        //Continue coding here ...
+                        if (!blockStorageStatusListMessage.RequestToSend)
+                        {
+                            var diff = CheckLocalStatusAndShowTheDifference(blockStorageStatusListMessage.BlockStorageStatusList);
+                            //var diff = blockStorageStatusListMessage.BlockStorageStatusList;
+
+
+                            if (diff.BlockStorageStatuses.Count != 0)
+                            {
+                                byte[] bytesOfblockStorageStatusList = MessagePackSerializer.Serialize(diff);
+
+                                var cHelper = new CryptographyHelper();
+
+                                var diffMessage = new BlockStorageStatusListMessage()
+                                {
+                                    BlockStorageStatusList = diff,
+                                    HashSignature = cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfblockStorageStatusList, 0, bytesOfblockStorageStatusList.Length), PrivateKey),
+                                    ReceiveIpAddress = this.ConnectionManager.ReceiveIP,
+                                    ReceivePort = this.ConnectionManager.ReceivePort,
+                                    RequestToSend = true
+                                };
+
+                                byte[] bytesOfBlockStorageStatusListMessage = MessagePackSerializer.Serialize(diffMessage);
+
+                                SendBytes(
+                                    bytesOfBlockStorageStatusListMessage,
+                                    blockStorageStatusListMessage.ReceiveIpAddress,
+                                    blockStorageStatusListMessage.ReceivePort,
+                                    10000,
+                                    10 * 1024 * 1024,
+                                    50,
+                                    50);
+                            }
+                        }
+                        else
+                        {
+                            var blocks = new List<Block>();
+
+                            foreach (var status in blockStorageStatusListMessage.BlockStorageStatusList.BlockStorageStatuses.OrderBy(s => s.Id).ThenBy(s => s.SequenceNumber).ToList())
+                            {
+                                var blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"\" + status.SequenceNumber.ToString());
+                                blocks.Add(MessagePackSerializer.Deserialize<Block>(blockBytes.ToArray()));
+                            }
+
+                            for (int j = 0; j < blocks.Count; j++)
+                            {
+                                byte[] bytesToSend = MessagePackSerializer.Serialize(blocks[j]);
+
+                                SendBytes(
+                                    bytesToSend, 
+                                    blockStorageStatusListMessage.ReceiveIpAddress, 
+                                    blockStorageStatusListMessage.ReceivePort,
+                                    10000,
+                                    10 * 1024 * 1024,
+                                    50,
+                                    50);
+                            }
+                        }
                     }
 
                     //Closing connection ...
@@ -341,9 +415,92 @@ namespace FullNode
                 }
             }
         }
+
+        public BlockStorageStatusList CheckLocalStatusAndShowTheDifference(BlockStorageStatusList blockStorageStatusList)
+        {
+            var current = GetCurrentLocalStatus();
+            var diff = new BlockStorageStatusList();
+            diff.BlockStorageStatuses = new List<BlockStorageStatus>();
+
+            foreach (var nStatus in blockStorageStatusList.BlockStorageStatuses)
+            {
+                bool found = false;
+
+                foreach (var cStatus in current)
+                {
+                    if(cStatus.Id == nStatus.Id && cStatus.SequenceNumber == nStatus.SequenceNumber)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    diff.BlockStorageStatuses.Add(nStatus);
+                }
+            }
+
+            return diff;
+        }
         public void ValidateCurrentBlocks()
         {
+            var directories = Directory.GetDirectories(this.StoragePath);
 
+            foreach (var dir in directories)
+            {
+                var subDirectories = dir.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+
+                Guid directoryId = Guid.Parse(subDirectories[subDirectories.Length - 1]);
+
+                var record = FindId(directoryId);
+
+                if (record == null)
+                {
+                    //if the id is deleted from observer then all data of that node must be deleted...
+                    Directory.Delete(dir, true);
+                    continue;
+                }
+
+                DirectoryInfo di = new DirectoryInfo(dir);
+                
+                FileSystemInfo[] files = di.GetFileSystemInfos();
+                
+                var orderedFiles = files.OrderBy(f => f.Name).ToList();
+
+                bool foundError = false;
+
+                foreach (var file in orderedFiles)
+                {
+                    if (foundError)
+                    {
+                        File.Delete(file.FullName);
+                    }
+                    else
+                    {
+                        var allReadBytes = File.ReadAllBytes(file.FullName);
+
+                        var block = MessagePackSerializer.Deserialize<Block>(allReadBytes);
+
+                        if (!CheckTheHashIsValid(block,true))
+                        {
+                            foundError = true;
+
+                            File.Delete(file.FullName);
+                        }
+                    }
+                }
+            }
+        }
+        public FullNodesRecord? FindId(Guid id)
+        {
+            foreach (var record in FullNodesData.fullNodesRecords)
+            {
+                if(record.Id == id)
+                {
+                    return record;
+                }
+            }
+            return null;
         }
         public List<BlockStorageStatus> GetCurrentLocalStatus()
         {
@@ -391,19 +548,31 @@ namespace FullNode
                 var msg = new BlockStorageStatusListMessage()
                 {
                     BlockStorageStatusList = blockStorageStatusList,
-                    HashSignature = cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfblockStorageStatusList, 0, bytesOfblockStorageStatusList.Length), PrivateKey)
+                    HashSignature = cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfblockStorageStatusList, 0, bytesOfblockStorageStatusList.Length), PrivateKey),
+                    ReceiveIpAddress = this.ConnectionManager.ReceiveIP,
+                    ReceivePort = this.ConnectionManager.ReceivePort,
+                    RequestToSend = false
                 };
 
                 byte[] bytesOfBlockStorageStatusListMessage = MessagePackSerializer.Serialize(msg);
 
-                SendBytes(bytesOfBlockStorageStatusListMessage, fnRecord.ReceiveIP, fnRecord.ReceivePort, numberOfRetrySendFile, speedBytePerSecond, sleepRetrySendFile, randomizeRangeSleep);
+                SendBytes(
+                    bytesOfBlockStorageStatusListMessage, 
+                    fnRecord.ReceiveIP, 
+                    fnRecord.ReceivePort, 
+                    numberOfRetrySendFile, 
+                    speedBytePerSecond, 
+                    sleepRetrySendFile, 
+                    randomizeRangeSleep);
             }
         }
         public void BlockSync()
         {
+            Thread.Sleep(60000);
+
             while (!ReceivingStopped)
             {
-                Thread.Sleep(30000);
+                UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
 
                 ValidateCurrentBlocks();
 
@@ -411,9 +580,13 @@ namespace FullNode
 
                 UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
 
-                foreach (var fnRecord in FullNodesData.fullNodesRecords)
+                var fnListRecords = FullNodesData.fullNodesRecords.ToList();
+
+                foreach (var fnRecord in fnListRecords)
                 {
                     SendCurrentStatusToSync(fnRecord, status,this.NetworkBandWidth, this.Index, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
+                    
+                    Thread.Sleep(60000);
                 }
             }
         }

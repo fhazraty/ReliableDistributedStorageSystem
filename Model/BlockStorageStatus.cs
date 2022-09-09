@@ -23,5 +23,11 @@ namespace Model
         public byte[] HashSignature;
         [Key(1)]
         public BlockStorageStatusList BlockStorageStatusList { get; set; }
+        [Key(2)]
+        public string ReceiveIpAddress { get; set; }
+        [Key(3)]
+        public int ReceivePort { get; set; }
+        [Key(4)]
+        public bool RequestToSend { get; set; }
     }
 }
