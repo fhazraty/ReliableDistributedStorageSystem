@@ -14,10 +14,10 @@ namespace Observer
         public bool StopThreadRequested { get; set; }
         public ObserverData ObserverData { get; set; }
         public FullNodesData FullNodesData { get; set; }
-        public List<List<long>> NetworkBandWidth { get; set; }
+        public List<SpeedLine> NetworkBandWidth { get; set; }
         public string MainPath { get; set; }
         public string FileStoragePath { get; set; }
-        public ConnectionManager(ObserverData oData, List<List<long>> networkBandWidth, string fileStoragePath)
+        public ConnectionManager(ObserverData oData, List<SpeedLine> networkBandWidth, string fileStoragePath)
         {
             this.ObserverData = oData;
             this.NetworkBandWidth = networkBandWidth;
@@ -246,7 +246,7 @@ namespace Observer
                         }
                         counter++;
                     }
-                    long sendSpeedFromObserverToFullNode = (NetworkBandWidth[10])[counter];
+                    long sendSpeedFromObserverToFullNode = 10*1024*1024;
 
                     
                     using (NetworkStream nwStream = client.GetStream())

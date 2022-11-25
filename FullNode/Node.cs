@@ -11,22 +11,35 @@ using Utilities;
 
 namespace FullNode
 {
+    public static class ExtensionMethods{
+        public static IEnumerable<byte[]> Split(this byte[] value, int bufferLength)
+        {
+            int countOfArray = value.Length / bufferLength;
+            if (value.Length % bufferLength > 0)
+                countOfArray++;
+            for (int i = 0; i < countOfArray; i++)
+            {
+                yield return value.Skip(i * bufferLength).Take(bufferLength).ToArray();
+            }
+        }
+    }
     public class Node : IDisposable
     {
-        public Node(
+        public Node
+            (Guid nodeId,
             ObserverData observerData, 
             string sendIp, 
             int sendPort, 
             string receiveIp, 
             int receivePort,
-            List<List<long>> networkBandWidth,
+            List<SpeedLine> networkBandWidth,
             int index,
             string mainPath,
             int sleepRetryObserver,
             int numberOfRetryObserver,
             int randomizeRangeSleep)
         {
-            this.Id = Guid.NewGuid();
+            this.Id = nodeId;
             this.Index = index;
             this.MainPath = mainPath;
             this.StoragePath = MainPath + Id.ToString() + @"\"; // c:\Miners\IdOfFullNode\
@@ -44,7 +57,9 @@ namespace FullNode
                 throw ((ErrorResult)res).ResultContainer;
             }
 
-            this.TransactionManager = new TransactionManager(
+            this.TransactionManager = 
+                new TransactionManager(
+                   this.Id,
                 this.ConnectionManager,
                 this.StoragePath, // c:\Miners\IdOfFullNode\
                 observerData,
@@ -98,15 +113,17 @@ namespace FullNode
             var cHelper = new CryptographyHelper();
             return cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), PrivateKey);
         }
+        
         private List<Block> BuildBlocks(byte[] file,string filename,Guid id, int version,long sequenceStart, byte[] hashPreviousBlock)
         {
             var block = new Block();
 
-            byte[][] chunks = file.Select((value, index) => new { PairNum = Math.Floor(index / (double)block.Header.BlockMaxSize), value }).GroupBy(pair => pair.PairNum).Select(grp => grp.Select(g => g.value).ToArray()).ToArray();
+            var chunks = file.Split((int)block.Header.BlockMaxSize).ToArray();
 
             var blocks = new List<Block>();
 
             Block previousBlock = null;
+
 
             for (int i = 0; i < chunks.Length; i++)
             {

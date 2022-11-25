@@ -1,4 +1,5 @@
-﻿using Model;
+﻿using FullFunctionProject;
+using Model;
 using Observer;
 
 //Main path to store miners data
@@ -18,18 +19,28 @@ var receivePortStartRange = 6000;
 // Network Bandwidth initialization
 // 10 nodes and one observer
 // 0 means no connection
-var networkBandWidth = new List<List<long>>();
-for (int i = 0; i < numberOfFullNodes + 1; i++)
+// 10*1024*1024
+
+var networkBandWidth = new List<SpeedLine>();
+List<Guid> nodeIdList = new List<Guid>();
+for (int i = 0; i < numberOfFullNodes; i++)
 {
-    var row = new List<long>();
-    for (int j = 0; j < numberOfFullNodes + 1; j++)
+    nodeIdList.Add(Guid.NewGuid());
+}
+
+for (int i = 0; i < nodeIdList.Count; i++)
+{
+    for (int j = 0; j < nodeIdList.Count; j++)
     {
-        if (i == j) 
-            row.Add(0); 
-        else 
-            row.Add(10*1024*1024);
+        if (i == j)
+        {
+            networkBandWidth.Add(new SpeedLine() { From = nodeIdList[i], To = nodeIdList[j],Speed = 0 });
+        }
+        else
+        {
+            networkBandWidth.Add(new SpeedLine() { From = nodeIdList[i], To = nodeIdList[j], Speed = 10*1024*1024 });
+        }
     }
-    networkBandWidth.Add(row);
 }
 
 // Starting observer
@@ -42,6 +53,7 @@ for (int i = 0; i < numberOfFullNodes; i++)
     fullNodes.Add
     (
         new FullNode.Node(
+            nodeIdList[i],
             observerData, 
             "127.0.0.1", 
             sendPortStartRange++, 
@@ -56,9 +68,25 @@ for (int i = 0; i < numberOfFullNodes; i++)
     );
 }
 
-Parallel.ForEach(fullNodes, fullNode =>
-{
-    //Submit file to network...
-    var res = fullNode.SaveFile("I Walk Alone_v720P.mp4", File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"),50,10000,50,10000,50);
-});
 
+
+foreach (var fullNode in fullNodes)
+{
+    StarterModel startModel = new StarterModel()
+    {
+        FileName = "I Walk Alone_v720P.mp4",
+        FileContent = File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"),
+        SleepRetryObserver = 50,
+        NumberOfRetryObserver = 50,
+        SleepRetrySendFile = 1000,
+        NumberOfRetrySendFile = 3,
+        RandomizeRangeSleep = 1000,
+        Node = fullNode
+    };
+
+    Starter starter = new Starter();
+    Thread T = new Thread(new ParameterizedThreadStart(starter.StartNodeThread));
+    T.Start(startModel);
+}
+
+Console.ReadKey();

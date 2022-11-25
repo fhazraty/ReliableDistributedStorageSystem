@@ -5,7 +5,7 @@ namespace Observer
     public class ObserverNode
     {
         public ConnectionManager ConnectionManager { get; set; }
-        public ObserverNode(ObserverData observerData, List<List<long>> networkBandWidth, string mainPath)
+        public ObserverNode(ObserverData observerData, List<SpeedLine> networkBandWidth, string mainPath)
         {
             ConnectionManager = new ConnectionManager(observerData, networkBandWidth, mainPath);
 

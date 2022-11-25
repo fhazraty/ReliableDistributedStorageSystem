@@ -2,10 +2,13 @@
 using Model;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using Utilities;
@@ -14,6 +17,7 @@ namespace FullNode
 {
     public class TransactionManager
     {
+        public Guid NodeId { get; set; }
         public bool ReceivingStopped { get; set; }
         public bool SyncingStopped { get; set; }
         public string StoragePath { get; set; }  // c:\Miners\IdOfFullNode\
@@ -25,8 +29,9 @@ namespace FullNode
         public int RandomizeRangeSleep { get; set; }
         public byte[] PrivateKey { get; set; }
         public int Index { get; set; }
-        public List<List<long>> NetworkBandWidth { get; set; }
+        public List<SpeedLine> NetworkBandWidth { get; set; }
         public TransactionManager(
+            Guid NodeId,
             ConnectionManager connectionManager, 
             string storagePath, // c:\Miners\IdOfFullNode\
             ObserverData observerData, 
@@ -35,8 +40,9 @@ namespace FullNode
             int randomizeRangeSleep,
             byte[] privateKey,
             int index,
-            List<List<long>> networkBandWidth)
+            List<SpeedLine> networkBandWidth)
         {
+            this.NodeId = NodeId;
             this.FullNodesData = new FullNodesData();
             this.ConnectionManager = connectionManager;
             ReceivingStopped = false;
@@ -49,7 +55,7 @@ namespace FullNode
             this.PrivateKey = privateKey;
             this.Index = index;
             this.NetworkBandWidth = networkBandWidth;
-            UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
+            //UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
         }
         public IBaseResult UpdateFullNodesData(ObserverData observerData, int sleepRetryObserver, int numberOfRetryObserver,int randomizeRangeSleep)
         {
@@ -76,6 +82,9 @@ namespace FullNode
                     }
 
                     this.FullNodesData = MessagePackSerializer.Deserialize<FullNodesData>(ms.ToArray());
+
+                    Console.WriteLine("====>>>>" + this.FullNodesData.fullNodesRecords.Count+ "<<<<======");
+
 
                     nwStream.Close();
                     nwStream.Dispose();
@@ -105,8 +114,11 @@ namespace FullNode
         private void SendBytes(byte[] bytesToSend,string iP,int port,int numberOfRetrySendFile,long speedBytePerSecond,int sleepRetrySendFile,int randomizeRangeSleep)
         {
             int retrier = 0;
+
             while (retrier < numberOfRetrySendFile)
             {
+                Console.WriteLine(NodeId.ToString() + " Sending try number " + retrier.ToString() + " to " + iP + ":" + port);
+
                 try
                 {
                     //Prepare TCP/IP Connection
@@ -118,6 +130,8 @@ namespace FullNode
                     {
                         iterationCount++;
                     }
+
+                    Console.WriteLine(this.NodeId + ",SendStart," + DateTime.Now.ToString());
 
                     for (int i = 0; i < (int)iterationCount; i++)
                     {
@@ -144,23 +158,28 @@ namespace FullNode
                     nwStream.Dispose();
                     client.Close();
                     client.Dispose();
-                    retrier = numberOfRetrySendFile;
+
+                    Console.WriteLine(this.NodeId + ",SendDone," + DateTime.Now.ToString());
+                    return;
                 }
                 catch (Exception ex)
                 {
                     var msg = ex.Message;
                     Console.WriteLine("here 2 : PropagateBlocks problem" + msg);
+
+                    retrier++;
+                    Random r = new Random();
+                    int sleepTimer = sleepRetrySendFile * r.Next(randomizeRangeSleep);
+                    Console.WriteLine("Error in sending file retry " + retrier + " sleep for " + sleepTimer);
+                    Thread.Sleep(sleepTimer);
                 }
-                retrier++;
-                Random r = new Random();
-                Thread.Sleep(sleepRetrySendFile * r.Next(randomizeRangeSleep));
             }
         }
 
         public IBaseResult PropagateBlocks(
             List<Block> blocks, 
             ObserverData observerData,
-            List<List<long>> networkBandWidth,
+            List<SpeedLine> networkBandWidth,
             int index,
             int sleepRetryObserver, 
             int numberOfRetryObserver,
@@ -171,23 +190,62 @@ namespace FullNode
             try
             {
                 UpdateFullNodesData(observerData, sleepRetryObserver, numberOfRetryObserver, randomizeRangeSleep);
-                int k = 0;
-                foreach (var fullNode in FullNodesData.fullNodesRecords)
+
+                
+
+                List<FullNodesRecord> copyOfFullNodesList = new List<FullNodesRecord>();
+
+                for (int i = 0; i < FullNodesData.fullNodesRecords.Count; i++)
                 {
-                    if(index == k)
+                    copyOfFullNodesList.Add(new FullNodesRecord()
                     {
-                        k++;
-                        continue;
+                        Id = FullNodesData.fullNodesRecords[i].Id,
+                        PublicKey = FullNodesData.fullNodesRecords[i].PublicKey,
+                        ReceiveIP = FullNodesData.fullNodesRecords[i].ReceiveIP,
+                        ReceivePort = FullNodesData.fullNodesRecords[i].ReceivePort,
+                        SendIP = FullNodesData.fullNodesRecords[i].SendIP,
+                        SendPort = FullNodesData.fullNodesRecords[i].SendPort
+                    });
+                }
+
+                int countOfFullNodes = copyOfFullNodesList.Count;
+
+                for (int i = 0; i < countOfFullNodes; i++)
+                {
+                    var endRange = copyOfFullNodesList.Count;
+
+                    Random rnd = new Random();
+
+                    var randomIndex = rnd.Next(0, endRange);
+
+                    var randomFullNodeSelected = copyOfFullNodesList[randomIndex];
+
+                    long speedBytePerSecond = 0;
+
+                    foreach (var bndwdth in networkBandWidth)
+                    {
+                        if(bndwdth.From == this.NodeId && bndwdth.To == randomFullNodeSelected.Id)
+                        {
+                            speedBytePerSecond = bndwdth.Speed;
+                        }
                     }
-                    long speedBytePerSecond = networkBandWidth[index][k];
+
+                    var removeResult = copyOfFullNodesList.Remove(randomFullNodeSelected);
+
+                    Console.WriteLine("Index [" + randomFullNodeSelected + "] removed!");
+
+                    if (speedBytePerSecond == 0) continue;
 
                     for (int j = 0; j < blocks.Count; j++)
                     {
                         byte[] bytesToSend = MessagePackSerializer.Serialize(blocks[j]);
 
-                        SendBytes(bytesToSend, fullNode.ReceiveIP, fullNode.ReceivePort, numberOfRetrySendFile, speedBytePerSecond, sleepRetrySendFile, randomizeRangeSleep);
+                        Console.WriteLine(this.NodeId + ",SendToRequested," + DateTime.Now.ToString() + randomFullNodeSelected.Id.ToString());
+
+                        SendBytes(bytesToSend, randomFullNodeSelected.ReceiveIP, randomFullNodeSelected.ReceivePort, numberOfRetrySendFile, speedBytePerSecond, sleepRetrySendFile, randomizeRangeSleep);
                     }
-                    k++;
+
+                    
                 }
 
                 return new SendFileMode()
@@ -217,6 +275,7 @@ namespace FullNode
                     }
                     else
                     {
+                        Console.WriteLine("Hash is not valid ------------------------------------<<<<");
                         return false;
                     }
 
@@ -240,7 +299,11 @@ namespace FullNode
 
                 var cHelper = new CryptographyHelper();
 
-                return cHelper.Verify(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), newblock.Header.HashPreviousBlock, fNodeData.PublicKey); ;
+                var checkHashRes = cHelper.Verify(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), newblock.Header.HashPreviousBlock, fNodeData.PublicKey);
+
+                if(!checkHashRes) Console.WriteLine("Hash is not valid ------------- ERROR IN VERIFY-----------------------<<<<");
+
+                return checkHashRes;
             }
             catch (Exception ex)
             {
@@ -368,11 +431,12 @@ namespace FullNode
 
                                 byte[] bytesOfBlockStorageStatusListMessage = MessagePackSerializer.Serialize(diffMessage);
 
+                                Console.WriteLine("Send Status to sync from " + this.NodeId + " To " + blockStorageStatusListMessage.ReceivePort);
                                 SendBytes(
                                     bytesOfBlockStorageStatusListMessage,
                                     blockStorageStatusListMessage.ReceiveIpAddress,
                                     blockStorageStatusListMessage.ReceivePort,
-                                    10000,
+                                    3,
                                     10 * 1024 * 1024,
                                     50,
                                     50);
@@ -384,19 +448,31 @@ namespace FullNode
 
                             foreach (var status in blockStorageStatusListMessage.BlockStorageStatusList.BlockStorageStatuses.OrderBy(s => s.Id).ThenBy(s => s.SequenceNumber).ToList())
                             {
-                                var blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"\" + status.SequenceNumber.ToString());
-                                blocks.Add(MessagePackSerializer.Deserialize<Block>(blockBytes.ToArray()));
+                                try
+                                {
+                                    var blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"\" + status.SequenceNumber.ToString());
+                                    blocks.Add(MessagePackSerializer.Deserialize<Block>(blockBytes.ToArray()));
+                                }
+                                catch (Exception ex)
+                                {
+                                    var msg = ex.Message;
+                                    Console.WriteLine("here 6 : BlockReceiver problem" + msg);
+                                }
                             }
 
                             for (int j = 0; j < blocks.Count; j++)
                             {
+                                Thread.Sleep(10000);
+
                                 byte[] bytesToSend = MessagePackSerializer.Serialize(blocks[j]);
+
+                                Console.WriteLine("Send Block in response from " + this.NodeId + " To " + blockStorageStatusListMessage.ReceivePort);
 
                                 SendBytes(
                                     bytesToSend, 
                                     blockStorageStatusListMessage.ReceiveIpAddress, 
                                     blockStorageStatusListMessage.ReceivePort,
-                                    10000,
+                                    3,
                                     10 * 1024 * 1024,
                                     50,
                                     50);
@@ -415,7 +491,6 @@ namespace FullNode
                 }
             }
         }
-
         public BlockStorageStatusList CheckLocalStatusAndShowTheDifference(BlockStorageStatusList blockStorageStatusList)
         {
             var current = GetCurrentLocalStatus();
@@ -520,21 +595,26 @@ namespace FullNode
         public void SendCurrentStatusToSync(
             FullNodesRecord fnRecord, 
             List<BlockStorageStatus> statuses,
-            List<List<long>> networkBandWidth,
+            List<SpeedLine> networkBandWidth,
             int index,
             int sleepRetrySendFile,
             int numberOfRetrySendFile,
             int randomizeRangeSleep)
         {
-            int k = 0;
+            ;
             foreach (var fullNode in FullNodesData.fullNodesRecords)
             {
-                if (index == k)
+                long speedBytePerSecond = 0;
+
+                foreach (var bndwdth in networkBandWidth)
                 {
-                    k++;
-                    continue;
+                    if (bndwdth.From == this.NodeId && bndwdth.To == fullNode.Id)
+                    {
+                        speedBytePerSecond = bndwdth.Speed;
+                    }
                 }
-                long speedBytePerSecond = networkBandWidth[index][k];
+
+                if (speedBytePerSecond == 0) continue;
 
                 var blockStorageStatusList = new BlockStorageStatusList()
                 {
@@ -555,6 +635,8 @@ namespace FullNode
                 };
 
                 byte[] bytesOfBlockStorageStatusListMessage = MessagePackSerializer.Serialize(msg);
+
+                Console.WriteLine("SendCurrentStatusToSync _ 123456789");
 
                 SendBytes(
                     bytesOfBlockStorageStatusListMessage, 
@@ -584,10 +666,11 @@ namespace FullNode
 
                 foreach (var fnRecord in fnListRecords)
                 {
-                    SendCurrentStatusToSync(fnRecord, status,this.NetworkBandWidth, this.Index, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
-                    
-                    Thread.Sleep(60000);
+                    SendCurrentStatusToSync(fnRecord, status,this.NetworkBandWidth, this.Index, 3, 3, this.RandomizeRangeSleep);
+                    Thread.Sleep(10000);
                 }
+
+                Thread.Sleep(60000);
             }
         }
     }

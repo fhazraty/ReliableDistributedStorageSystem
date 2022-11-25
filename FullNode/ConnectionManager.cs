@@ -18,9 +18,9 @@ namespace FullNode
         public string ReceiveIP { get; set; }
         public int SendPort { get; set; }
         public int ReceivePort { get; set; }
-        public List<List<long>> NetworkBandWidth { get; set; }
+        public List<SpeedLine> NetworkBandWidth { get; set; }
         
-        public ConnectionManager(string sendIp, int sendPort, string receiveIp, int receivePort, List<List<long>> networkBandWidth,Guid id)
+        public ConnectionManager(string sendIp, int sendPort, string receiveIp, int receivePort, List<SpeedLine> networkBandWidth,Guid id)
         {
             this.SendIP = sendIp;
             this.SendPort = sendPort;
@@ -32,7 +32,7 @@ namespace FullNode
         public IBaseResult RegisterOnObserver(ObserverData observerData)
         {
             int retrycounter = 0;
-            while (retrycounter < 10)
+            while (retrycounter < 100)
             {
                 try
                 {
@@ -69,7 +69,7 @@ namespace FullNode
                 }
                 catch (Exception ex)
                 {
-                    var msg = ex.Message;
+                    Console.WriteLine("Error on register : " + ex.Message);
                 }
                 Thread.Sleep(1000);
                 retrycounter++;
