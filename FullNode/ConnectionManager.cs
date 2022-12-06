@@ -29,10 +29,10 @@ namespace FullNode
             this.NetworkBandWidth = networkBandWidth;
             this.Id = id;
         }
-        public IBaseResult RegisterOnObserver(ObserverData observerData)
+        public IBaseResult RegisterOnObserver(ObserverData observerData,int retryToConnect,int sleepTimer,int randomizeTimer)
         {
             int retrycounter = 0;
-            while (retrycounter < 100)
+            while (retrycounter < retryToConnect)
             {
                 try
                 {
@@ -71,7 +71,11 @@ namespace FullNode
                 {
                     Console.WriteLine("Error on register : " + ex.Message);
                 }
-                Thread.Sleep(1000);
+                
+                Random rnd = new Random();
+
+                Thread.Sleep(sleepTimer * rnd.Next(0,randomizeTimer));
+
                 retrycounter++;
             }
             return new ErrorResult()

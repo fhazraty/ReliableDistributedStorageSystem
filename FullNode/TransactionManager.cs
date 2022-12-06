@@ -1,16 +1,8 @@
 ﻿using MessagePack;
 using Model;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Runtime.Intrinsics.Arm;
-using System.Text;
-using System.Threading.Tasks;
 using Utilities;
 
 namespace FullNode
@@ -27,8 +19,10 @@ namespace FullNode
         public int SleepRetryObserver { get; set; }
         public int NumberOfRetryObserver { get; set; }
         public int RandomizeRangeSleep { get; set; }
+        public int SleepRetrySendFile { get; set; }
+        public int NumberOfRetrySendFile { get; set; }
+        public int RandomizeRangeSleepSendBlock { get; set; }
         public byte[] PrivateKey { get; set; }
-        public int Index { get; set; }
         public List<SpeedLine> NetworkBandWidth { get; set; }
         public TransactionManager(
             Guid NodeId,
@@ -38,8 +32,10 @@ namespace FullNode
             int sleepRetryObserver, 
             int numberOfRetryObserver, 
             int randomizeRangeSleep,
+            int sleepRetrySendFile,
+            int numberOfRetrySendFile,
+            int randomizeRangeSleepSendBlock,
             byte[] privateKey,
-            int index,
             List<SpeedLine> networkBandWidth)
         {
             this.NodeId = NodeId;
@@ -52,8 +48,12 @@ namespace FullNode
             this.SleepRetryObserver = sleepRetryObserver;
             this.NumberOfRetryObserver = numberOfRetryObserver;
             this.RandomizeRangeSleep = randomizeRangeSleep;
+
+            this.SleepRetrySendFile = sleepRetrySendFile;
+            this.NumberOfRetrySendFile = numberOfRetrySendFile;
+            this.RandomizeRangeSleepSendBlock = randomizeRangeSleepSendBlock;
+
             this.PrivateKey = privateKey;
-            this.Index = index;
             this.NetworkBandWidth = networkBandWidth;
             //UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
         }
@@ -101,7 +101,7 @@ namespace FullNode
                 }
                 retryCounter++;
                 Random r = new Random();
-                Thread.Sleep(sleepRetryObserver* r.Next(randomizeRangeSleep));
+                Thread.Sleep(sleepRetryObserver * r.Next(randomizeRangeSleep));
             }
             //Exception occured!
             return new ErrorResult()
@@ -180,7 +180,6 @@ namespace FullNode
             List<Block> blocks, 
             ObserverData observerData,
             List<SpeedLine> networkBandWidth,
-            int index,
             int sleepRetryObserver, 
             int numberOfRetryObserver,
             int sleepRetrySendFile,
@@ -596,12 +595,11 @@ namespace FullNode
             FullNodesRecord fnRecord, 
             List<BlockStorageStatus> statuses,
             List<SpeedLine> networkBandWidth,
-            int index,
             int sleepRetrySendFile,
             int numberOfRetrySendFile,
             int randomizeRangeSleep)
         {
-            ;
+            
             foreach (var fullNode in FullNodesData.fullNodesRecords)
             {
                 long speedBytePerSecond = 0;
@@ -650,7 +648,7 @@ namespace FullNode
         }
         public void BlockSync()
         {
-            Thread.Sleep(60000);
+            Thread.Sleep(30000);
 
             while (!ReceivingStopped)
             {
@@ -666,7 +664,8 @@ namespace FullNode
 
                 foreach (var fnRecord in fnListRecords)
                 {
-                    SendCurrentStatusToSync(fnRecord, status,this.NetworkBandWidth, this.Index, 3, 3, this.RandomizeRangeSleep);
+                    SendCurrentStatusToSync(fnRecord, status,this.NetworkBandWidth, this.SleepRetrySendFile, this.NumberOfRetrySendFile, this.RandomizeRangeSleepSendBlock);
+                    
                     Thread.Sleep(10000);
                 }
 
