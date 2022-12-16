@@ -51,6 +51,7 @@ namespace FullNode
 
             this.ObserverData = observerData;
 
+            //Initialize a new connection manager
             this.ConnectionManager = new ConnectionManager(sendIp, sendPort, receiveIp, receivePort, networkBandWidth, this.Id);
             
             //Registering this new node on observer

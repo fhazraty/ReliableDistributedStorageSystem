@@ -2,6 +2,15 @@
 {
     public class ObserverData
     {
+        /// <summary>
+        /// Data required for initializing an observer
+        /// </summary>
+        /// <param name="broadCastIp">Broadcasting IP address</param>
+        /// <param name="broadCastPort">Broadcasting port</param>
+        /// <param name="addIp">Add new node IP address</param>
+        /// <param name="addPort">Add new node port</param>
+        /// <param name="removeIp">Remove node IP address</param>
+        /// <param name="removePort">Remove node port</param>
         public ObserverData(string broadCastIp,int broadCastPort,string addIp,int addPort,string removeIp,int removePort)
         {
             this.BroadCastIp = broadCastIp;

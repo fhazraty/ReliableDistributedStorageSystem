@@ -24,6 +24,22 @@ namespace FullNode
         public int RandomizeRangeSleepSendBlock { get; set; }
         public byte[] PrivateKey { get; set; }
         public List<SpeedLine> NetworkBandWidth { get; set; }
+
+        /// <summary>
+        /// Transaction manager is responsible for managing transactions between nodes
+        /// </summary>
+        /// <param name="NodeId">The current node Guid</param>
+        /// <param name="connectionManager">The connection manager used for transactions</param>
+        /// <param name="storagePath">Current node storage path</param>
+        /// <param name="observerData">The observer node data to update network nodes list</param>
+        /// <param name="sleepRetryObserver">The sleep time before retry to connect to observer</param>
+        /// <param name="numberOfRetryObserver">The number of retry to connect to observer</param>
+        /// <param name="randomizeRangeSleep">The random range number for sleep timer</param>
+        /// <param name="sleepRetrySendFile">The sleep time befor retry to send file</param>
+        /// <param name="numberOfRetrySendFile">The number of retry to send file</param>
+        /// <param name="randomizeRangeSleepSendBlock">The random range number for send file</param>
+        /// <param name="privateKey">The private key to sign block</param>
+        /// <param name="networkBandWidth">The bandwidth of network</param>
         public TransactionManager(
             Guid NodeId,
             ConnectionManager connectionManager, 
@@ -41,10 +57,17 @@ namespace FullNode
             this.NodeId = NodeId;
             this.FullNodesData = new FullNodesData();
             this.ConnectionManager = connectionManager;
+
+            //The variable to stop receiver thread
             ReceivingStopped = false;
+
+            //The variable to stop synchronization thread
             SyncingStopped = false;
+
+
             this.StoragePath = storagePath;  // c:\Miners\IdOfFullNode\
             this.ObserverData = observerData;
+
             this.SleepRetryObserver = sleepRetryObserver;
             this.NumberOfRetryObserver = numberOfRetryObserver;
             this.RandomizeRangeSleep = randomizeRangeSleep;
@@ -57,7 +80,16 @@ namespace FullNode
             this.NetworkBandWidth = networkBandWidth;
             //UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
         }
-        public IBaseResult UpdateFullNodesData(ObserverData observerData, int sleepRetryObserver, int numberOfRetryObserver,int randomizeRangeSleep)
+
+        /// <summary>
+        /// Update the FullNodesData variable
+        /// </summary>
+        /// <param name="observerData">Observer node data</param>
+        /// <param name="sleepRetryObserver">The sleep time before retry to connect to observer</param>
+        /// <param name="numberOfRetryObserver">The number of retry to connect to observer</param>
+        /// <param name="randomizeRangeSleep">The random range number for sleep timer</param>
+        /// <returns></returns>
+        private IBaseResult UpdateFullNodesData(ObserverData observerData, int sleepRetryObserver, int numberOfRetryObserver,int randomizeRangeSleep)
         {
             var retryCounter = 0;
             while (retryCounter < numberOfRetryObserver)
@@ -69,7 +101,7 @@ namespace FullNode
                     NetworkStream nwStream = client.GetStream();
                     byte[] buffer = new byte[client.ReceiveBufferSize];
 
-                    //Read bytes ... 
+                    //The buffer for readomg data
                     byte[] data = new byte[1024];
 
                     MemoryStream ms = new MemoryStream();
@@ -83,8 +115,7 @@ namespace FullNode
 
                     this.FullNodesData = MessagePackSerializer.Deserialize<FullNodesData>(ms.ToArray());
 
-                    Console.WriteLine("====>>>>" + this.FullNodesData.fullNodesRecords.Count+ "<<<<======");
-
+                    Console.WriteLine("The full node data is updated on = "+ this.NodeId.ToString() +" =node count===>>>>" + this.FullNodesData.fullNodesRecords.Count);
 
                     nwStream.Close();
                     nwStream.Dispose();
@@ -97,7 +128,7 @@ namespace FullNode
                 catch (Exception ex)
                 {
                     var msg = ex.Message;
-                    Console.WriteLine("here 1 : UpdateFullNodesData problem" + msg);
+                    Console.WriteLine("Error here 1 : UpdateFullNodesData problem" + msg);
                 }
                 retryCounter++;
                 Random r = new Random();
@@ -107,7 +138,7 @@ namespace FullNode
             return new ErrorResult()
             {
                 Successful = false,
-                ResultContainer = new Exception("cannot connect to observer...")
+                ResultContainer = new Exception("Error here 7 : Cannot connect to observer...")
             };
         }
 
@@ -231,7 +262,7 @@ namespace FullNode
 
                     var removeResult = copyOfFullNodesList.Remove(randomFullNodeSelected);
 
-                    Console.WriteLine("Index [" + randomFullNodeSelected + "] removed!");
+                    Console.WriteLine("Index [" + randomIndex + "] value " + randomFullNodeSelected.Id + " removed!");
 
                     if (speedBytePerSecond == 0) continue;
 
