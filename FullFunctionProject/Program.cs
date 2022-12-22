@@ -67,8 +67,20 @@ for (int i = 0; i < nodeIdList.Count; i++)
     }
 }
 
+Guid observerGuid = Guid.NewGuid();
+
+for (int i = 0; i < nodeIdList.Count; i++)
+{
+    networkBandWidth.Add(new SpeedLine() { From = nodeIdList[i], To = observerGuid, Speed = 10 * 1024 * 1024 });
+}
+
+for (int i = 0; i < nodeIdList.Count; i++)
+{
+    networkBandWidth.Add(new SpeedLine() { From = observerGuid, To = nodeIdList[i], Speed = 10 * 1024 * 1024 });
+}
+
 // Starting observer
-var observerNode = new ObserverNode(observerData, networkBandWidth, mainPath);
+var observerNode = new ObserverNode(observerData, networkBandWidth, mainPath, observerGuid);
 
 //Declaring fullnodes list
 var fullNodes = new List<FullNode.Node>();
