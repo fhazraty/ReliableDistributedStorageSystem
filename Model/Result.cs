@@ -1,5 +1,8 @@
 ﻿namespace Model
 {
+    /// <summary>
+    /// The model for result of actions
+    /// </summary>
     public interface IBaseResult
     {
         bool Successful { get; set; }

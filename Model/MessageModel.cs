@@ -2,6 +2,9 @@
 
 namespace Model
 {
+    /// <summary>
+    /// This class used for test purposes
+    /// </summary>
     [MessagePackObject]
     public class MessageModel
     {
