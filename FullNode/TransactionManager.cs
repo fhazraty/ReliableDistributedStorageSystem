@@ -82,7 +82,7 @@ namespace FullNode
         }
 
         /// <summary>
-        /// Update the FullNodesData variable
+        /// Update the FullNodesData variable from observer
         /// </summary>
         /// <param name="observerData">Observer node data</param>
         /// <param name="sleepRetryObserver">The sleep time before retry to connect to observer</param>
@@ -142,6 +142,17 @@ namespace FullNode
             };
         }
 
+
+        /// <summary>
+        /// Send byte array to IP and port address
+        /// </summary>
+        /// <param name="bytesToSend">Byte array which must be send</param>
+        /// <param name="iP">Destination IP address</param>
+        /// <param name="port">Destination port</param>
+        /// <param name="numberOfRetrySendFile">Number of retry</param>
+        /// <param name="speedBytePerSecond">The speed of line</param>
+        /// <param name="sleepRetrySendFile">The delay between retry send file</param>
+        /// <param name="randomizeRangeSleep">Randomize sleep parameter</param>
         private void SendBytes(byte[] bytesToSend,string iP,int port,int numberOfRetrySendFile,long speedBytePerSecond,int sleepRetrySendFile,int randomizeRangeSleep)
         {
             int retrier = 0;
@@ -207,6 +218,18 @@ namespace FullNode
             }
         }
 
+        /// <summary>
+        /// Propagates blocks across the network
+        /// </summary>
+        /// <param name="blocks">The blocks which must be submitted</param>
+        /// <param name="observerData">Observer node data</param>
+        /// <param name="networkBandWidth">The bandwidth of network</param>
+        /// <param name="sleepRetryObserver">The delay between retry connecting to observer</param>
+        /// <param name="numberOfRetryObserver">The number of retry connecting to observer</param>
+        /// <param name="sleepRetrySendFile">The delay between retry sending file</param>
+        /// <param name="numberOfRetrySendFile">The number of retry sending file</param>
+        /// <param name="randomizeRangeSleep">The randomize parameter for sleep</param>
+        /// <returns>The propagation is successful or not</returns>
         public IBaseResult PropagateBlocks(
             List<Block> blocks, 
             ObserverData observerData,
@@ -293,6 +316,13 @@ namespace FullNode
                 };
             }
         }
+
+        /// <summary>
+        /// Check the hash of block is valid or not
+        /// </summary>
+        /// <param name="newblock">Received block</param>
+        /// <param name="reCheck">Check the previous block</param>
+        /// <returns>The block is valid or not</returns>
         public bool CheckTheHashIsValid(Block newblock,bool reCheck)
         {
             try
@@ -340,6 +370,12 @@ namespace FullNode
                 return false;
             }
         }
+
+        /// <summary>
+        /// Get the current block of submitter with this GUID
+        /// </summary>
+        /// <param name="id">The GUID of submitter</param>
+        /// <returns>The latest stored block of this submitter</returns>
         public Block? GetCurrentBlock(Guid id)
         {
             var listOfFiles = Directory.GetFiles(StoragePath + id.ToString() + @"\").ToList();
@@ -348,6 +384,13 @@ namespace FullNode
             var latestBlockByteArray = File.ReadAllBytes(latestFile);
             return MessagePackSerializer.Deserialize<Block>(latestBlockByteArray.ToArray());
         }
+        
+        /// <summary>
+        /// Get the previous block with this GUID
+        /// </summary>
+        /// <param name="id">The guid of block submitter</param>
+        /// <param name="sequenceNumber">Current sequence</param>
+        /// <returns></returns>
         public Block? GetPreviousBlock(Guid id, long sequenceNumber)
         {
             if(sequenceNumber == 0)
@@ -357,6 +400,10 @@ namespace FullNode
             var latestBlockByteArray = File.ReadAllBytes(StoragePath + id.ToString() + @"\" + (sequenceNumber-1).ToString());
             return MessagePackSerializer.Deserialize<Block>(latestBlockByteArray.ToArray());
         }
+        
+        /// <summary>
+        /// The main thread of a fullnode for receiving blocks
+        /// </summary>
         public void BlockReceiver()
         {
             //Listening ...
@@ -521,6 +568,12 @@ namespace FullNode
                 }
             }
         }
+
+        /// <summary>
+        /// Check the local status of stored blocks and find the difference
+        /// </summary>
+        /// <param name="blockStorageStatusList">The received status</param>
+        /// <returns>Difference</returns>
         public BlockStorageStatusList CheckLocalStatusAndShowTheDifference(BlockStorageStatusList blockStorageStatusList)
         {
             var current = GetCurrentLocalStatus();
@@ -547,6 +600,9 @@ namespace FullNode
 
             return diff;
         }
+        /// <summary>
+        /// Validate local stored blocks and remove errors
+        /// </summary>
         public void ValidateCurrentBlocks()
         {
             var directories = Directory.GetDirectories(this.StoragePath);
@@ -596,6 +652,11 @@ namespace FullNode
                 }
             }
         }
+        /// <summary>
+        /// Search for finding a GUID in list
+        /// </summary>
+        /// <param name="id">The Guid which must be searched for</param>
+        /// <returns>The fullnode record with this GUID</returns>
         public FullNodesRecord? FindId(Guid id)
         {
             foreach (var record in FullNodesData.fullNodesRecords)
@@ -607,6 +668,10 @@ namespace FullNode
             }
             return null;
         }
+        /// <summary>
+        /// Prepare the current status of network to sync
+        /// </summary>
+        /// <returns>Current status list</returns>
         public List<BlockStorageStatus> GetCurrentLocalStatus()
         {
             var list = new List<BlockStorageStatus>();
@@ -622,6 +687,16 @@ namespace FullNode
 
             return list;
         }
+        
+        /// <summary>
+        /// Prepare current status to sync
+        /// </summary>
+        /// <param name="fnRecord">The current fullnode data</param>
+        /// <param name="statuses">The current status of node</param>
+        /// <param name="networkBandWidth">Bandwidth network</param>
+        /// <param name="sleepRetrySendFile">Delay between retry send</param>
+        /// <param name="numberOfRetrySendFile">The number of retry send</param>
+        /// <param name="randomizeRangeSleep">The randomize number</param>
         public void SendCurrentStatusToSync(
             FullNodesRecord fnRecord, 
             List<BlockStorageStatus> statuses,
@@ -633,8 +708,8 @@ namespace FullNode
             
             foreach (var fullNode in FullNodesData.fullNodesRecords)
             {
+                // Find the speed line
                 long speedBytePerSecond = 0;
-
                 foreach (var bndwdth in networkBandWidth)
                 {
                     if (bndwdth.From == this.NodeId && bndwdth.To == fullNode.Id)
@@ -643,6 +718,7 @@ namespace FullNode
                     }
                 }
 
+                // There is no suitable line
                 if (speedBytePerSecond == 0) continue;
 
                 var blockStorageStatusList = new BlockStorageStatusList()
@@ -677,6 +753,10 @@ namespace FullNode
                     randomizeRangeSleep);
             }
         }
+        
+        /// <summary>
+        /// This thread sends current status of node to other nodes for sync purposes
+        /// </summary>
         public void BlockSync()
         {
             Thread.Sleep(30000);
