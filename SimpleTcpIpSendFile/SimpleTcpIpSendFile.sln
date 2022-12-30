@@ -11,9 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Observer", "..\Observer\Obs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Model", "..\Model\Model.csproj", "{17865075-1363-4ADB-A109-4F204C1B490B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullFunctionProject", "..\FullFunctionProject\FullFunctionProject.csproj", "{20152D1F-90D0-4E06-B438-9A06255CA8F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FullFunctionProject", "..\FullFunctionProject\FullFunctionProject.csproj", "{20152D1F-90D0-4E06-B438-9A06255CA8F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "..\Utilities\Utilities.csproj", "{47F54E55-423F-4E19-A06E-3B2D11D7D442}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utilities", "..\Utilities\Utilities.csproj", "{47F54E55-423F-4E19-A06E-3B2D11D7D442}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FullNodeDataLogger", "..\FullNodeDataLogger\FullNodeDataLogger.csproj", "{4A0536A7-3CB7-459F-85BD-C33DD62DAB52}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{47F54E55-423F-4E19-A06E-3B2D11D7D442}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47F54E55-423F-4E19-A06E-3B2D11D7D442}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47F54E55-423F-4E19-A06E-3B2D11D7D442}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A0536A7-3CB7-459F-85BD-C33DD62DAB52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A0536A7-3CB7-459F-85BD-C33DD62DAB52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A0536A7-3CB7-459F-85BD-C33DD62DAB52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A0536A7-3CB7-459F-85BD-C33DD62DAB52}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,15 @@
 ﻿using FullFunctionProject;
+using FullNodeDataLogger.Management;
+using FullNodeDataLogger.Repository;
 using Model;
 using Observer;
+
+
+var logManagement = new LogManagement(new LogRepository(new FullNodeDataLogger.EF.FullNodeDataLoggerEntities()));
+var logResult = logManagement.MakeLog(new FullNodeDataLogger.EF.Model.Log()
+{
+    Description = "Program started from FullFunctionProject"
+});
 
 //Main path to store miners data
 var mainPath = @"c:\Miners\";
