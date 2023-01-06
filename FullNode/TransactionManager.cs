@@ -1,4 +1,8 @@
-﻿using MessagePack;
+﻿using FullNodeDataLogger.EF.Model;
+using FullNodeDataLogger.EF;
+using FullNodeDataLogger.Management;
+using FullNodeDataLogger.Repository;
+using MessagePack;
 using Model;
 using System.Data;
 using System.Net;
@@ -242,9 +246,26 @@ namespace FullNode
         {
             try
             {
+                var logManagement = new LogManagement(new LogRepository(new FullNodeDataLoggerEntities()));
+                var logResult =
+                    logManagement.MakeLog(
+                        new Log()
+                        {
+                            Description = "Start sync fullnodeData from observer",
+                            LogGroup = "4", // Group 4 is start propagation
+                            FromId = this.NodeId.ToString()
+                        });
+
                 UpdateFullNodesData(observerData, sleepRetryObserver, numberOfRetryObserver, randomizeRangeSleep);
 
-                
+                logResult =
+                    logManagement.MakeLog(
+                        new Log()
+                        {
+                            Description = "End sync fullnodeData from observer",
+                            LogGroup = "4", // Group 4 is start propagation
+                            FromId = this.NodeId.ToString()
+                        });
 
                 List<FullNodesRecord> copyOfFullNodesList = new List<FullNodesRecord>();
 
@@ -262,6 +283,16 @@ namespace FullNode
                 }
 
                 int countOfFullNodes = copyOfFullNodesList.Count;
+
+
+                logResult =
+                    logManagement.MakeLog(
+                        new Log()
+                        {
+                            Description = "Start send all blocks",
+                            LogGroup = "4", // Group 4 is start propagation
+                            FromId = this.NodeId.ToString()
+                        });
 
                 for (int i = 0; i < countOfFullNodes; i++)
                 {
@@ -295,11 +326,40 @@ namespace FullNode
 
                         Console.WriteLine(this.NodeId + ",SendToRequested," + DateTime.Now.ToString() + randomFullNodeSelected.Id.ToString());
 
-                        SendBytes(bytesToSend, randomFullNodeSelected.ReceiveIP, randomFullNodeSelected.ReceivePort, numberOfRetrySendFile, speedBytePerSecond, sleepRetrySendFile, randomizeRangeSleep);
-                    }
+                        logResult =
+                            logManagement.MakeLog(
+                                new Log()
+                                {
+                                    Description = "Start SendBlock index : " + j.ToString(),
+                                    LogGroup = "4", // Group 4 is start propagation
+                                    FromId = this.NodeId.ToString(),
+                                    ToId = randomFullNodeSelected.Id.ToString()
+                                });
 
+                        SendBytes(bytesToSend, randomFullNodeSelected.ReceiveIP, randomFullNodeSelected.ReceivePort, numberOfRetrySendFile, speedBytePerSecond, sleepRetrySendFile, randomizeRangeSleep);
+
+                        logResult =
+                            logManagement.MakeLog(
+                                new Log()
+                                {
+                                    Description = "End SendBlock index : " + j.ToString(),
+                                    LogGroup = "4", // Group 4 is start propagation
+                                    FromId = this.NodeId.ToString(),
+                                    ToId = randomFullNodeSelected.Id.ToString()
+                                });
+                    }
                     
                 }
+
+
+                logResult =
+                    logManagement.MakeLog(
+                        new Log()
+                        {
+                            Description = "End send all blocks",
+                            LogGroup = "4", // Group 4 is start propagation
+                            FromId = this.NodeId.ToString()
+                        });
 
                 return new SendFileMode()
                 {

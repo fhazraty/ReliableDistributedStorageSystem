@@ -724,6 +724,7 @@
       },
       "FullNode/1.0.0": {
         "dependencies": {
+          "FullNodeDataLogger": "1.0.0",
           "MessagePack": "2.3.85",
           "Model": "1.0.0",
           "Utilities": "1.0.0"

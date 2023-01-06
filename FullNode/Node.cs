@@ -1,6 +1,10 @@
-﻿using MessagePack;
+﻿using FullNodeDataLogger.Management;
+using FullNodeDataLogger.Repository;
+using FullNodeDataLogger.EF;
+using MessagePack;
 using Model;
 using Utilities;
+using FullNodeDataLogger.EF.Model;
 
 namespace FullNode
 {
@@ -231,6 +235,17 @@ namespace FullNode
                     fs.Write(msbyte, 0, msbyte.Length);
                 }
             }
+
+            //Test and start logging service for monitoring
+            var logManagement = new LogManagement(new LogRepository(new FullNodeDataLoggerEntities()));
+            var logResult =
+                logManagement.MakeLog(
+                    new Log()
+                    {
+                        Description = "Start propagation",
+                        LogGroup = "4", // Group 4 is start propagation
+                        FromId = Id.ToString()
+                    });
 
             return TransactionManager.PropagateBlocks(
                 blocks, 

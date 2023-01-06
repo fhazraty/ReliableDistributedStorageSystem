@@ -3,13 +3,18 @@ using FullNodeDataLogger.Management;
 using FullNodeDataLogger.Repository;
 using Model;
 using Observer;
+using FullNodeDataLogger.EF;
+using FullNodeDataLogger.EF.Model;
 
-
-var logManagement = new LogManagement(new LogRepository(new FullNodeDataLogger.EF.FullNodeDataLoggerEntities()));
-var logResult = logManagement.MakeLog(new FullNodeDataLogger.EF.Model.Log()
-{
-    Description = "Program started from FullFunctionProject"
-});
+//Test and start logging service for monitoring
+var logManagement = new LogManagement(new LogRepository(new FullNodeDataLoggerEntities()));
+var logResult = 
+    logManagement.MakeLog(
+        new Log()
+        {
+            Description = "Program started from FullFunctionProject",
+            LogGroup = "1" // Group 1 is info
+        });
 
 //Main path to store miners data
 var mainPath = @"c:\Miners\";
@@ -22,12 +27,23 @@ try
 } 
 catch(DirectoryNotFoundException nfex)
 {
-    Console.WriteLine("Directory not found but the program can continue ...");
+    logResult = 
+        logManagement.MakeLog(
+            new Log() 
+            { 
+                Description = "Directory not found but the program can continue... ErrorDetail: " + nfex.Message.ToString(),
+                LogGroup = "2" // Group 2 is error
+            });
 }
 catch(Exception ex)
 {
-    Console.WriteLine("Error in removing old files and folders ...");
-    Console.WriteLine(ex.Message);
+    logResult = 
+        logManagement.MakeLog(
+            new Log() 
+            { 
+                Description = "Error in removing old files and folders... ErrorDetail: " + ex.Message.ToString() ,
+                LogGroup = "2" // Group 2 is error
+            });
     
     //Waiting...
     Console.ReadKey();
@@ -134,6 +150,15 @@ for (int i = 0; i < numberOfFullNodes; i++)
 //Sending a transaction to each node
 foreach (var fullNode in fullNodes)
 {
+    logResult =
+    logManagement.MakeLog(
+        new Log()
+        {
+            Description = "Submitting the transaction to network",
+            LogGroup = "3", // Group 3 is sending transaction 
+            FromId = fullNode.Id.ToString()
+        });
+
     StarterModel startModel = new StarterModel()
     {
         FileName = "I Walk Alone_v720P.mp4",
