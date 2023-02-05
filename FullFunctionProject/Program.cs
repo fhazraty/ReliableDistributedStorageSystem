@@ -87,7 +87,7 @@ for (int i = 0; i < nodeIdList.Count; i++)
         }
         else
         {
-            networkBandWidth.Add(new SpeedLine() { From = nodeIdList[i], To = nodeIdList[j], Speed = 10*1024*1024 });
+            networkBandWidth.Add(new SpeedLine() { From = nodeIdList[i], To = nodeIdList[j], Speed = 1*1024*1024 });
         }
     }
 }
@@ -96,12 +96,12 @@ Guid observerGuid = Guid.NewGuid();
 
 for (int i = 0; i < nodeIdList.Count; i++)
 {
-    networkBandWidth.Add(new SpeedLine() { From = nodeIdList[i], To = observerGuid, Speed = 10 * 1024 * 1024 });
+    networkBandWidth.Add(new SpeedLine() { From = nodeIdList[i], To = observerGuid, Speed = 1 * 1024 * 1024 });
 }
 
 for (int i = 0; i < nodeIdList.Count; i++)
 {
-    networkBandWidth.Add(new SpeedLine() { From = observerGuid, To = nodeIdList[i], Speed = 10 * 1024 * 1024 });
+    networkBandWidth.Add(new SpeedLine() { From = observerGuid, To = nodeIdList[i], Speed = 1 * 1024 * 1024 });
 }
 
 // Starting observer

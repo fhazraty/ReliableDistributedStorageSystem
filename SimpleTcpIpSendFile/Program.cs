@@ -1,6 +1,20 @@
 ﻿using Model;
+using System.Text;
 using Utilities;
 
+var cHelper = new CryptographyHelper();
+byte[] publicKey;
+byte[] privateKey;
+cHelper.GenerateKeyRSA(out privateKey, out publicKey);
+string originalMessage = "Hello!";
+
+var signedData = cHelper.SignRSA(Encoding.UTF8.GetBytes(originalMessage),privateKey);
+var resultOfChecking = cHelper.VerifyRSA(Encoding.UTF8.GetBytes(originalMessage), signedData, publicKey);
+Console.WriteLine(resultOfChecking);
+
+Console.ReadKey();
+
+/*
 Console.WriteLine("Simple TCP IP Send and receive File:");
 Console.WriteLine("Press 0 to Generate keys :");
 Console.WriteLine("Press 1 to send or 2 to receive :");
@@ -57,5 +71,5 @@ else
     }
     
 }
-
 Console.ReadKey();
+*/
