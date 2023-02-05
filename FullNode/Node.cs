@@ -130,7 +130,7 @@ namespace FullNode
             if (block == null) return null;
             byte[] bytesOfBlock = MessagePackSerializer.Serialize(block);
             var cHelper = new CryptographyHelper();
-            return cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), PrivateKey);
+            return cHelper.SignRSA(bytesOfBlock, PrivateKey);
         }
         
         private List<Block> BuildBlocks(byte[] file,string filename,Guid id, int version,long sequenceStart, byte[] hashPreviousBlock)

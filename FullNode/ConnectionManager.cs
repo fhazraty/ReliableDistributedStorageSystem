@@ -39,7 +39,7 @@ namespace FullNode
                     var cHelper = new CryptographyHelper();
                     byte[] publicKey;
                     byte[] privateKey;
-                    cHelper.GenerateKey(out privateKey, out publicKey);
+                    cHelper.GenerateKeyRSA(out privateKey, out publicKey);
 
                     byte[] bytesToSend = MessagePackSerializer.Serialize(new FullNodesRecord()
                     {

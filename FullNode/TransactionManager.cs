@@ -419,7 +419,7 @@ namespace FullNode
 
                 var cHelper = new CryptographyHelper();
 
-                var checkHashRes = cHelper.Verify(cHelper.GetHashSha256ToByte(bytesOfBlock, 0, bytesOfBlock.Length), newblock.Header.HashPreviousBlock, fNodeData.PublicKey);
+                var checkHashRes = cHelper.VerifyRSA(bytesOfBlock, newblock.Header.HashPreviousBlock, fNodeData.PublicKey);
 
                 if(!checkHashRes) Console.WriteLine("Hash is not valid ------------- ERROR IN VERIFY-----------------------<<<<");
 
@@ -560,7 +560,7 @@ namespace FullNode
                                 var diffMessage = new BlockStorageStatusListMessage()
                                 {
                                     BlockStorageStatusList = diff,
-                                    HashSignature = cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfblockStorageStatusList, 0, bytesOfblockStorageStatusList.Length), PrivateKey),
+                                    HashSignature = cHelper.SignRSA(bytesOfblockStorageStatusList, PrivateKey),
                                     ReceiveIpAddress = this.ConnectionManager.ReceiveIP,
                                     ReceivePort = this.ConnectionManager.ReceivePort,
                                     RequestToSend = true
@@ -793,7 +793,7 @@ namespace FullNode
                 var msg = new BlockStorageStatusListMessage()
                 {
                     BlockStorageStatusList = blockStorageStatusList,
-                    HashSignature = cHelper.Sign(cHelper.GetHashSha256ToByte(bytesOfblockStorageStatusList, 0, bytesOfblockStorageStatusList.Length), PrivateKey),
+                    HashSignature = cHelper.SignRSA(bytesOfblockStorageStatusList, PrivateKey),
                     ReceiveIpAddress = this.ConnectionManager.ReceiveIP,
                     ReceivePort = this.ConnectionManager.ReceivePort,
                     RequestToSend = false
