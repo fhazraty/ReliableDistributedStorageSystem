@@ -40,6 +40,8 @@
         }
         public byte[] Sign(byte[] hash, byte[] privateKey)
         {
+            var start = DateTime.Now;
+
             var param = new ECParameters
             {
                 D = privateKey,
@@ -47,7 +49,13 @@
             };
 
             using (var dsa = ECDsa.Create(param))
-                return dsa.SignHash(hash);
+            {
+                var signedHash = dsa.SignHash(hash);
+                
+                var miliseconds = DateTime.Now.Subtract(start).TotalMilliseconds;
+
+                return signedHash;
+            }
         }
 
         public bool Verify(byte[] hash, byte[] signature, byte[] publicKey)
