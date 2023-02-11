@@ -102,6 +102,7 @@
         }
         public byte[] SignRSA(byte[] data, byte[] privateKey)
         {
+            var start = DateTime.Now;
             //// The array to store the signed message in bytes
             byte[] signedBytes;
             using (var rsa = new RSACryptoServiceProvider())
@@ -130,6 +131,10 @@
                 }
             }
             //// Convert the a base64 string before returning
+            ///
+
+            var miliseconds = DateTime.Now.Subtract(start).TotalMilliseconds;
+
             return signedBytes;
         }
         public bool VerifyRSA(byte[] originalMessage, byte[] signedMessage, byte[] publicKey)
