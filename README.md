@@ -9,16 +9,26 @@ We have proposed a simple permissioned blockchain-inspired system that stores th
 First download the whole source code or clone this repository on local computer. Then download and install latest version of [the .NET Core SDK](https://www.microsoft.com/net/download). Then run
 these commands from the CLI in the directory of FullFunctionProject:
 
+Install dotnet core SDK:
+```console
+sudo apt-get update && \
+  sudo apt-get install -y dotnet-sdk-6.0
+```
+Install dotnet core Runtime:
+```console
+sudo apt-get update && \
+  sudo apt-get install -y aspnetcore-runtime-6.0
+```
+Build and Run Project:
 ```console
 dotnet build
 dotnet run
 ```
-
 These will install any needed dependencies, build the project, and run
 the project respectively.
 
 ## Data Storage
-Please be careful that project uses c drive to store fullnodes data. 
+Please be careful that project uses c drive to store fullnodes data. In linux servers the relative path must be fixed:
 ```csharp
 //Main path to store miners data
 var mainPath = @"c:\Miners\";
