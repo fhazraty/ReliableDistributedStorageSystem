@@ -5,36 +5,34 @@ Different types of techniques like replicating data on multiple nodes and updati
 The security and privacy of data are other issues that need some techniques to prevent data from being exposed, tampered and manipulated by adversary actors. 
 We have proposed a simple permissioned blockchain-inspired system that stores the chunks of files on different nodes and synchronizes them over a period of time. 
 
-## Building and Run
-First download the whole source code or clone this repository on local computer. Then download and install latest version of [the .NET Core SDK](https://www.microsoft.com/net/download). Then run
-these commands from the CLI in the directory of FullFunctionProject:
+## Install Docker
+Docker installation
+The docker which implements this image must have at least 4 GB of RAM. This resource is not required in this project however, for installing the docker engine, 4GB is [required](https://docs.docker.com/desktop/install/linux-install/).
+
+We have tested this project on a standard virtual server on [HETZNER Cloud](https://www.hetzner.com/legal/cloud-server/). 
+The installation is discussed as follows:
+
+Operating System: Ubuntu 22.04
+VCPUS: 3 Cores (AMD)
+RAM: 4GB
+DISK: Depends on the transaction payload
+
+Install the docker from this [link](https://docs.docker.com/engine/install/ubuntu/)
 
 ```console
-dotnet build
-dotnet run
-```
+sudo apt-get update
+sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
 
-These will install any needed dependencies, build the project, and run
-the project respectively.
+sudo mkdir -m 0755 -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-## Data Storage
-Please be careful that project uses c drive to store fullnodes data. 
-```csharp
-//Main path to store miners data
-var mainPath = @"c:\Miners\";
-```
-
-In FullFunctionProject\Program.cs you can change the transaction file:
-```csharp
-    StarterModel startModel = new StarterModel()
-    {
-        FileName = "I Walk Alone_v720P.mp4",
-        FileContent = File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"),
-        SleepRetryObserver = 50,
-        NumberOfRetryObserver = 50,
-        SleepRetrySendFile = 1000,
-        NumberOfRetrySendFile = 3,
-        RandomizeRangeSleep = 1000,
-        Node = fullNode
-    };
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
