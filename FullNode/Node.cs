@@ -47,8 +47,8 @@ namespace FullNode
 
             this.MainPath = mainPath;
 
-            //Define the storage path of full node which is c:\Miners\IdOfFullNode\
-            this.StoragePath = MainPath + Id.ToString() + @"\";
+            //Define the storage path of full node which is /Miners/IdOfFullNode/
+            this.StoragePath = MainPath + Id.ToString() + @"/";
 
             //Bulding this storage path if not exists
             BuildPathIfNotExists();
@@ -108,9 +108,9 @@ namespace FullNode
             {
                 Directory.CreateDirectory(StoragePath);
             }
-            if (!Directory.Exists(StoragePath + Id.ToString() + @"\"))
+            if (!Directory.Exists(StoragePath + Id.ToString() + @"/"))
             {
-                Directory.CreateDirectory(StoragePath + Id.ToString() + @"\");
+                Directory.CreateDirectory(StoragePath + Id.ToString() + @"/");
             }
         }
         public Guid Id { get; set; }
@@ -191,7 +191,7 @@ namespace FullNode
         {
             BuildPathIfNotExists();
 
-            var listOfFiles = Directory.GetFiles(StoragePath + Id.ToString() + @"\").ToList();
+            var listOfFiles = Directory.GetFiles(StoragePath + Id.ToString() + @"/").ToList();
             if (listOfFiles.Count == 0) return null;
             var latestFile = listOfFiles.OrderByDescending(l => l.ToString()).ToArray()[0];
             var latestBlockByteArray = File.ReadAllBytes(StoragePath + latestFile);
@@ -212,12 +212,12 @@ namespace FullNode
 
             foreach (var block in blocks)
             {
-                string pathToStore = StoragePath + Id.ToString() + @"\";
+                string pathToStore = StoragePath + Id.ToString() + @"/";
                 if (!Directory.Exists(pathToStore))
                 {
                     Directory.CreateDirectory(pathToStore);
                 }
-                string fullPath = pathToStore + @"\" + block.Content.SequenceNumber;
+                string fullPath = pathToStore + @"/" + block.Content.SequenceNumber;
 
                 try
                 {

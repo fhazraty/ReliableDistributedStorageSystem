@@ -11,6 +11,7 @@ COPY ["../FullNode/FullNode.csproj", "FullNode/"]
 COPY ["../Model/Model.csproj", "Model/"]
 COPY ["../Utilities/Utilities.csproj", "Utilities/"]
 COPY ["../Observer/Observer.csproj", "Observer/"]
+RUN dotnet clean "FullFunctionProject/FullFunctionProject.csproj"
 RUN dotnet restore "FullFunctionProject/FullFunctionProject.csproj"
 COPY . .
 WORKDIR "/src/FullFunctionProject"
@@ -21,5 +22,6 @@ RUN dotnet publish "FullFunctionProject.csproj" -c Release -o /app/publish /p:Us
 
 FROM base AS final
 WORKDIR /app
+COPY ["../FullFunctionProject/I Walk Alone_v720P.mp4", "MinersFile/"]
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "FullFunctionProject.dll"]

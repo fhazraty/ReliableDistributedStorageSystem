@@ -16,7 +16,7 @@ namespace FullNode
         public Guid NodeId { get; set; }
         public bool ReceivingStopped { get; set; }
         public bool SyncingStopped { get; set; }
-        public string StoragePath { get; set; }  // c:\Miners\IdOfFullNode\
+        public string StoragePath { get; set; }  // /Miners/IdOfFullNode/
         public FullNodesData FullNodesData { get; set; }
         public ConnectionManager ConnectionManager { get; set; }
         public ObserverData ObserverData { get; set; }
@@ -47,7 +47,7 @@ namespace FullNode
         public TransactionManager(
             Guid NodeId,
             ConnectionManager connectionManager, 
-            string storagePath, // c:\Miners\IdOfFullNode\
+            string storagePath, // /Miners/IdOfFullNode/
             ObserverData observerData, 
             int sleepRetryObserver, 
             int numberOfRetryObserver, 
@@ -69,7 +69,7 @@ namespace FullNode
             SyncingStopped = false;
 
 
-            this.StoragePath = storagePath;  // c:\Miners\IdOfFullNode\
+            this.StoragePath = storagePath;  // /Miners/IdOfFullNode/
             this.ObserverData = observerData;
 
             this.SleepRetryObserver = sleepRetryObserver;
@@ -526,7 +526,7 @@ namespace FullNode
                         {
                             Directory.CreateDirectory(pathToStore);
                         }
-                        string fullPath = pathToStore + @"\" + receivedBlock.Content.SequenceNumber;
+                        string fullPath = pathToStore + @"/" + receivedBlock.Content.SequenceNumber;
 
                         try
                         {
@@ -587,7 +587,7 @@ namespace FullNode
                             {
                                 try
                                 {
-                                    var blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"\" + status.SequenceNumber.ToString());
+                                    var blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"/" + status.SequenceNumber.ToString());
                                     blocks.Add(MessagePackSerializer.Deserialize<Block>(blockBytes.ToArray()));
                                 }
                                 catch (Exception ex)
@@ -669,7 +669,7 @@ namespace FullNode
 
             foreach (var dir in directories)
             {
-                var subDirectories = dir.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+                var subDirectories = dir.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
                 Guid directoryId = Guid.Parse(subDirectories[subDirectories.Length - 1]);
 
@@ -735,12 +735,11 @@ namespace FullNode
         public List<BlockStorageStatus> GetCurrentLocalStatus()
         {
             var list = new List<BlockStorageStatus>();
-
             var pathList = Directory.GetFiles(this.StoragePath, "*", SearchOption.AllDirectories);
             foreach (var path in pathList)
             {
                 var status = new BlockStorageStatus();
-                status.Id = Guid.Parse(path.Split('\\')[3]);
+                status.Id = Guid.Parse(path.Split('/')[2]);
                 status.SequenceNumber = int.Parse(Path.GetFileNameWithoutExtension(path));
                 list.Add(status);
             }

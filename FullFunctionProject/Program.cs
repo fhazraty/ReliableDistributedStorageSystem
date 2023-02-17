@@ -16,8 +16,26 @@ var logResult =
             LogGroup = "1" // Group 1 is info
         });
 
+
+var isLinux = true;
+
 //Main path to store miners data
-var mainPath = @"c:\Miners\";
+var mainPath = "";
+var fileRegisterPath = "";
+
+if (isLinux)
+{
+    mainPath = @"Miners/";
+    fileRegisterPath = @"MinersFile";
+}
+else
+{
+    mainPath = @"c:\Miners\";
+    fileRegisterPath = @"C:\MinersFile";
+}
+ 
+
+
 
 //Cleansing
 //Delete old files and folders
@@ -159,10 +177,19 @@ foreach (var fullNode in fullNodes)
             FromId = fullNode.Id.ToString()
         });
 
+    string fileContentPath = "";
+    if (isLinux) {
+        fileContentPath = fileRegisterPath + @"/I Walk Alone_v720P.mp4";
+    }
+    else
+    {
+        fileContentPath = fileRegisterPath + @"\I Walk Alone_v720P.mp4";
+    }
+
     StarterModel startModel = new StarterModel()
     {
         FileName = "I Walk Alone_v720P.mp4",
-        FileContent = File.ReadAllBytes(@"C:\Users\farhad\Downloads\Video\I Walk Alone_v720P.mp4"),
+        FileContent = File.ReadAllBytes(fileContentPath),
         SleepRetryObserver = 50,
         NumberOfRetryObserver = 50,
         SleepRetrySendFile = 1000,

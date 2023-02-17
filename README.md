@@ -46,6 +46,6 @@ cd ./ReliableDistributedStorageSystem/
 
 ## Build dockerfile and start project
 ```console
-docker build -t myfullfunctionproject .
-docker run --rm -it $(docker build -q .)
+docker build --no-cache -t myfullfunctionproject:1.0 -f Dockerfile .
+docker run --rm -it myfullfunctionproject:1.0
 ```
