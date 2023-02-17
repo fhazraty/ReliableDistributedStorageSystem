@@ -41,7 +41,7 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 ```console
 sudo apt install git
 git clone -b Dockerize https://github.com/fhazraty/ReliableDistributedStorageSystem.git 
-cd ./ReliableDistributedStorageSystem/FullFunctionProject/
+cd ./ReliableDistributedStorageSystem/
 ```
 
 ## Build dockerfile and start project
