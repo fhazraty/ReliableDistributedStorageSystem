@@ -5,13 +5,13 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
-COPY ["FullFunctionProject/FullFunctionProject.csproj", "FullFunctionProject/"]
-COPY ["FullNodeDataLogger/FullNodeDataLogger.csproj", "FullNodeDataLogger/"]
-COPY ["FullNode/FullNode.csproj", "FullNode/"]
-COPY ["Model/Model.csproj", "Model/"]
-COPY ["Utilities/Utilities.csproj", "Utilities/"]
-COPY ["Observer/Observer.csproj", "Observer/"]
-RUN dotnet restore "FullFunctionProject/FullFunctionProject.csproj"
+COPY ["../FullFunctionProject/FullFunctionProject.csproj", "FullFunctionProject/"]
+COPY ["../FullNodeDataLogger/FullNodeDataLogger.csproj", "FullNodeDataLogger/"]
+COPY ["../FullNode/FullNode.csproj", "FullNode/"]
+COPY ["../Model/Model.csproj", "Model/"]
+COPY ["../Utilities/Utilities.csproj", "Utilities/"]
+COPY ["../Observer/Observer.csproj", "Observer/"]
+RUN dotnet restore "../FullFunctionProject/FullFunctionProject.csproj"
 COPY . .
 WORKDIR "/src/FullFunctionProject"
 RUN dotnet build "FullFunctionProject.csproj" -c Release -o /app/build
