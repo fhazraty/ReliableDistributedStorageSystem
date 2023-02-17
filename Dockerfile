@@ -11,7 +11,7 @@ COPY ["../FullNode/FullNode.csproj", "FullNode/"]
 COPY ["../Model/Model.csproj", "Model/"]
 COPY ["../Utilities/Utilities.csproj", "Utilities/"]
 COPY ["../Observer/Observer.csproj", "Observer/"]
-RUN dotnet restore "../FullFunctionProject/FullFunctionProject.csproj"
+RUN dotnet restore "FullFunctionProject/FullFunctionProject.csproj"
 COPY . .
 WORKDIR "/src/FullFunctionProject"
 RUN dotnet build "FullFunctionProject.csproj" -c Release -o /app/build
