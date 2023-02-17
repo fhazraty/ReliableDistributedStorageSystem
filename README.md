@@ -36,3 +36,16 @@ echo \
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
+
+## Install and Clone git
+```console
+sudo apt install git
+git clone -b Dockerize https://github.com/fhazraty/ReliableDistributedStorageSystem.git 
+cd ./ReliableDistributedStorageSystem/FullFunctionProject/
+```
+
+## Build dockerfile and start project
+```console
+docker build -t myfullfunctionproject .
+docker run --rm -it $(docker build -q .)
+```
