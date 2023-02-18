@@ -161,7 +161,9 @@ for (int i = 0; i < numberOfFullNodes; i++)
             //The number of retries to send files
             100,
             //The randomize parameter of sleeping by multiply a random number between 0 and this number to sleeptime parameter for sending files
-            50)
+            50,
+            //The host server is linux or windows
+            isLinux)
     );
 }
 
