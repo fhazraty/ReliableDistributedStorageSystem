@@ -15,8 +15,8 @@ namespace FullNodeDataLogger.Management
 
         public IBaseResult MakeLog(Log log)
         {
+            return null;
             log.LogTime = DateTime.Now;
-
             return LogRepository.Create(log);
         }
     }

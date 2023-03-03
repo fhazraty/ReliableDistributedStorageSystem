@@ -16,7 +16,7 @@ namespace FullNode
         public Guid NodeId { get; set; }
         public bool ReceivingStopped { get; set; }
         public bool SyncingStopped { get; set; }
-        public string StoragePath { get; set; }  // c:\Miners\IdOfFullNode\
+        public string StoragePath { get; set; }  // Linux : /Miners/IdOfFullNode/ Windows : c:\Miners\IdOfFullNode\
         public FullNodesData FullNodesData { get; set; }
         public ConnectionManager ConnectionManager { get; set; }
         public ObserverData ObserverData { get; set; }
@@ -28,6 +28,7 @@ namespace FullNode
         public int RandomizeRangeSleepSendBlock { get; set; }
         public byte[] PrivateKey { get; set; }
         public List<SpeedLine> NetworkBandWidth { get; set; }
+        public bool IsLinux { get; set; }
 
         /// <summary>
         /// Transaction manager is responsible for managing transactions between nodes
@@ -44,10 +45,11 @@ namespace FullNode
         /// <param name="randomizeRangeSleepSendBlock">The random range number for send file</param>
         /// <param name="privateKey">The private key to sign block</param>
         /// <param name="networkBandWidth">The bandwidth of network</param>
+        /// <param name="isLinux">The host server is linux or windows</param>
         public TransactionManager(
             Guid NodeId,
             ConnectionManager connectionManager, 
-            string storagePath, // c:\Miners\IdOfFullNode\
+            string storagePath, // /Miners/IdOfFullNode/
             ObserverData observerData, 
             int sleepRetryObserver, 
             int numberOfRetryObserver, 
@@ -56,7 +58,8 @@ namespace FullNode
             int numberOfRetrySendFile,
             int randomizeRangeSleepSendBlock,
             byte[] privateKey,
-            List<SpeedLine> networkBandWidth)
+            List<SpeedLine> networkBandWidth,
+            bool isLinux)
         {
             this.NodeId = NodeId;
             this.FullNodesData = new FullNodesData();
@@ -69,7 +72,7 @@ namespace FullNode
             SyncingStopped = false;
 
 
-            this.StoragePath = storagePath;  // c:\Miners\IdOfFullNode\
+            this.StoragePath = storagePath;  // /Miners/IdOfFullNode/
             this.ObserverData = observerData;
 
             this.SleepRetryObserver = sleepRetryObserver;
@@ -83,6 +86,7 @@ namespace FullNode
             this.PrivateKey = privateKey;
             this.NetworkBandWidth = networkBandWidth;
             //UpdateFullNodesData(this.ObserverData, this.SleepRetryObserver, this.NumberOfRetryObserver, this.RandomizeRangeSleep);
+            this.IsLinux = isLinux;
         }
 
         /// <summary>
@@ -526,7 +530,16 @@ namespace FullNode
                         {
                             Directory.CreateDirectory(pathToStore);
                         }
-                        string fullPath = pathToStore + @"\" + receivedBlock.Content.SequenceNumber;
+                        string fullPath = "";
+
+                        if (IsLinux)
+                        {
+                            fullPath = pathToStore + @"/" + receivedBlock.Content.SequenceNumber;
+                        }
+                        else
+                        {
+                            fullPath = pathToStore + @"\\" + receivedBlock.Content.SequenceNumber;
+                        }
 
                         try
                         {
@@ -587,7 +600,16 @@ namespace FullNode
                             {
                                 try
                                 {
-                                    var blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"\" + status.SequenceNumber.ToString());
+                                    byte[] blockBytes;
+                                    if (IsLinux)
+                                    {
+                                        blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"/" + status.SequenceNumber.ToString());
+                                    }
+                                    else
+                                    {
+                                        blockBytes = File.ReadAllBytes(StoragePath + status.Id.ToString() + @"\\" + status.SequenceNumber.ToString());
+                                    }
+                                    
                                     blocks.Add(MessagePackSerializer.Deserialize<Block>(blockBytes.ToArray()));
                                 }
                                 catch (Exception ex)
@@ -669,7 +691,16 @@ namespace FullNode
 
             foreach (var dir in directories)
             {
-                var subDirectories = dir.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+                string[] subDirectories;
+                if (IsLinux)
+                {
+                    subDirectories = dir.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                }
+                else
+                {
+                    subDirectories = dir.Split('\\', StringSplitOptions.RemoveEmptyEntries);
+                }
+                
 
                 Guid directoryId = Guid.Parse(subDirectories[subDirectories.Length - 1]);
 
@@ -735,12 +766,19 @@ namespace FullNode
         public List<BlockStorageStatus> GetCurrentLocalStatus()
         {
             var list = new List<BlockStorageStatus>();
-
             var pathList = Directory.GetFiles(this.StoragePath, "*", SearchOption.AllDirectories);
             foreach (var path in pathList)
             {
                 var status = new BlockStorageStatus();
-                status.Id = Guid.Parse(path.Split('\\')[3]);
+                if (IsLinux)
+                {
+                    status.Id = Guid.Parse(path.Split('/')[2]);
+                }
+                else
+                {
+                    status.Id = Guid.Parse(path.Split('\\')[3]);
+                }
+
                 status.SequenceNumber = int.Parse(Path.GetFileNameWithoutExtension(path));
                 list.Add(status);
             }

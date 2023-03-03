@@ -27,6 +27,7 @@ namespace FullNode
         /// <param name="sleepRetrySendFile">Sleep between retry sending files</param>
         /// <param name="numberOfRetrySendFile">The number of retries to send files</param>
         /// <param name="randomizeRangeSleepSendBlock">The randomize parameter of sleeping by multiply a random number between 0 and this number to sleeptime parameter for sending files</param>
+        /// <param name="isLinux">The host server is linux or windows</param>
         public Node
             (Guid nodeId,
             ObserverData observerData, 
@@ -41,14 +42,24 @@ namespace FullNode
             int randomizeRangeSleep,
             int sleepRetrySendFile,
             int numberOfRetrySendFile,
-            int randomizeRangeSleepSendBlock)
+            int randomizeRangeSleepSendBlock,
+            bool isLinux)
         {
             this.Id = nodeId;
 
             this.MainPath = mainPath;
+            this.IsLinux = isLinux;
+            //Define the storage path of full node which is /Miners/IdOfFullNode/
+            if (IsLinux)
+            {
+                this.StoragePath = MainPath + Id.ToString() + @"/";
+            }
+            else
+            {
+                this.StoragePath = MainPath + Id.ToString() + @"\\";
+            }
 
-            //Define the storage path of full node which is c:\Miners\IdOfFullNode\
-            this.StoragePath = MainPath + Id.ToString() + @"\";
+            
 
             //Bulding this storage path if not exists
             BuildPathIfNotExists();
@@ -86,7 +97,8 @@ namespace FullNode
                     numberOfRetrySendFile,
                     randomizeRangeSleepSendBlock,
                     this.PrivateKey,
-                    networkBandWidth);
+                    networkBandWidth,
+                    isLinux);
 
             //Thread for receiving data from other nodes
             this.BlockReceiverThread = new Thread(new ThreadStart(this.TransactionManager.BlockReceiver));
@@ -108,9 +120,20 @@ namespace FullNode
             {
                 Directory.CreateDirectory(StoragePath);
             }
-            if (!Directory.Exists(StoragePath + Id.ToString() + @"\"))
+
+            if (IsLinux)
             {
-                Directory.CreateDirectory(StoragePath + Id.ToString() + @"\");
+                if (!Directory.Exists(StoragePath + Id.ToString() + @"/"))
+                {
+                    Directory.CreateDirectory(StoragePath + Id.ToString() + @"/");
+                }
+            }
+            else
+            {
+                if (!Directory.Exists(StoragePath + Id.ToString() + @"\\"))
+                {
+                    Directory.CreateDirectory(StoragePath + Id.ToString() + @"\\");
+                }
             }
         }
         public Guid Id { get; set; }
@@ -125,6 +148,7 @@ namespace FullNode
         public string StoragePath { get; set; }
         private byte[] PrivateKey { get; set; }
         public ObserverData ObserverData { get; set; }
+        public bool IsLinux { get; set; }
         private byte[] GetHashOfBlock(Block block)
         {
             if (block == null) return null;
@@ -190,8 +214,16 @@ namespace FullNode
         public Block? GetCurrentBlock()
         {
             BuildPathIfNotExists();
-
-            var listOfFiles = Directory.GetFiles(StoragePath + Id.ToString() + @"\").ToList();
+            List<string> listOfFiles;
+            if (IsLinux)
+            {
+                listOfFiles = Directory.GetFiles(StoragePath + Id.ToString() + @"/").ToList();
+            }
+            else
+            {
+                listOfFiles = Directory.GetFiles(StoragePath + Id.ToString() + @"\\").ToList();
+            }
+         
             if (listOfFiles.Count == 0) return null;
             var latestFile = listOfFiles.OrderByDescending(l => l.ToString()).ToArray()[0];
             var latestBlockByteArray = File.ReadAllBytes(StoragePath + latestFile);
@@ -212,13 +244,32 @@ namespace FullNode
 
             foreach (var block in blocks)
             {
-                string pathToStore = StoragePath + Id.ToString() + @"\";
+                string pathToStore = "";
+                if (IsLinux)
+                {
+                    pathToStore = StoragePath + Id.ToString() + @"/";
+                }
+                else
+                {
+                    pathToStore = StoragePath + Id.ToString() + @"\\";
+                }
+                
                 if (!Directory.Exists(pathToStore))
                 {
                     Directory.CreateDirectory(pathToStore);
                 }
-                string fullPath = pathToStore + @"\" + block.Content.SequenceNumber;
 
+                string fullPath = "";
+
+                if (IsLinux)
+                {
+                    fullPath = pathToStore + @"/" + block.Content.SequenceNumber;
+                }
+                else
+                {
+                    fullPath = pathToStore + @"\\" + block.Content.SequenceNumber;
+                }
+                
                 try
                 {
                     File.Delete(fullPath);
