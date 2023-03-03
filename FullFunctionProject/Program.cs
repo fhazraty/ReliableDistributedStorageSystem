@@ -62,10 +62,11 @@ catch(Exception ex)
                 Description = "Error in removing old files and folders... ErrorDetail: " + ex.Message.ToString() ,
                 LogGroup = "2" // Group 2 is error
             });
-    
+
+    Console.WriteLine("Program cannot continue!!!");
     //Waiting...
     Console.ReadKey();
-    
+
     //Prevent running program...
     return;
 }

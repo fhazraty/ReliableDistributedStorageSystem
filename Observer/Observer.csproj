@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FullNodeDataLogger\FullNodeDataLogger.csproj" />
     <ProjectReference Include="..\Model\Model.csproj" />
   </ItemGroup>
 
